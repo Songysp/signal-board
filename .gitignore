@@ -1,4 +1,6 @@
 .env
 .venv/
+.signalboard.tokens.json
+.signalboard-watch-*.json
 __pycache__/
 *.pyc
