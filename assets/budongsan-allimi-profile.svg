@@ -1,0 +1,44 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="140" y1="120" x2="890" y2="920" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF4D6"/>
+      <stop offset="0.5" stop-color="#FFDFA2"/>
+      <stop offset="1" stop-color="#F6B34C"/>
+    </linearGradient>
+    <linearGradient id="card" x1="256" y1="258" x2="790" y2="800" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#FFF3DA"/>
+    </linearGradient>
+    <filter id="shadow" x="176" y="176" width="672" height="672" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="26"/>
+      <feGaussianBlur stdDeviation="28"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.552941 0 0 0 0 0.360784 0 0 0 0 0.0470588 0 0 0 0.18 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_1"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_1" result="shape"/>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="1024" rx="280" fill="url(#bg)"/>
+  <circle cx="824" cy="206" r="96" fill="#FFE6A8" fill-opacity="0.85"/>
+  <circle cx="188" cy="820" r="128" fill="#F9C86A" fill-opacity="0.55"/>
+
+  <g filter="url(#shadow)">
+    <rect x="232" y="214" width="560" height="560" rx="168" fill="url(#card)"/>
+  </g>
+
+  <path d="M327 501L512 352L697 501V664C697 685.539 679.539 703 658 703H366C344.461 703 327 685.539 327 664V501Z" fill="#FFB13B"/>
+  <path d="M284 494L492.85 320.441C504.045 311.136 520.263 311.136 531.458 320.441L740 494" stroke="#7A4B0E" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M364 486V666C364 676.493 372.507 685 383 685H642C652.493 685 661 676.493 661 666V486" stroke="#7A4B0E" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <rect x="452" y="560" width="120" height="125" rx="28" fill="#FFF8EA" stroke="#7A4B0E" stroke-width="24"/>
+  <circle cx="545" cy="622" r="9" fill="#7A4B0E"/>
+
+  <path d="M640 356C640 325.072 665.072 300 696 300C726.928 300 752 325.072 752 356V402C752 417.347 758.181 432.048 769.162 442.838L780 453.484V476H612V453.484L622.838 442.838C633.819 432.048 640 417.347 640 402V356Z" fill="#FFF4D3" stroke="#7A4B0E" stroke-width="24" stroke-linejoin="round"/>
+  <path d="M677 500C677 510.77 685.73 519.5 696.5 519.5C707.27 519.5 716 510.77 716 500" stroke="#7A4B0E" stroke-width="20" stroke-linecap="round"/>
+
+  <circle cx="738" cy="304" r="34" fill="#FF6B35"/>
+  <path d="M721 304H755" stroke="white" stroke-width="12" stroke-linecap="round"/>
+  <path d="M738 287V321" stroke="white" stroke-width="12" stroke-linecap="round"/>
+</svg>
