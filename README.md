@@ -1,8 +1,8 @@
 # SignalBoard
 
-독립 프로젝트 폴더입니다.
+부동산 신규 매물 알림에서 시작해, 장기적으로는 경제 학습 대시보드까지 확장하는 독립 프로젝트입니다.
 
-목표:
+현재 MVP 목표:
 
 - 네이버부동산 저장 검색 URL 기반 신규 매물 감지
 - 카카오톡 나에게 메시지 발송
@@ -12,15 +12,22 @@
 
 - `부동산알리미`
 
-초기 구조:
+현재 상태:
 
 - `app/` : 백엔드 코드
 - `assets/` : 브랜딩/채널 이미지
+- `docs/` : 설계/상태 문서
 - `.env.example` : 환경변수 예시
 
-다음 구현 범위:
+이미 구현된 것:
 
-1. 저장 검색 URL 등록
-2. 신규 매물 감지
-3. 카카오 알림 발송
-4. 최소 API + 웹 관리 화면
+1. Kakao self-message 토큰 관리 및 테스트 발송
+2. Naver `fin.land` / `new.land` / `m.land` URL 파싱
+3. 신버전 URL을 mobile 수집 경로로 연결하는 브리지 로직
+4. 신규 매물 diff 로직
+5. PostgreSQL 스키마와 저장 함수
+6. DB 없이 바로 써볼 수 있는 `preview-search`, `poll-url` CLI
+
+상세 방향과 최신 구현 상태:
+
+- [ARCHITECTURE.md](/Users/song/Documents/signal-board/docs/ARCHITECTURE.md)
