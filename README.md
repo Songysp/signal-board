@@ -57,6 +57,10 @@ API 실행:
 .\.venv\bin\python.exe -m uvicorn app.main:app --reload
 ```
 
+관리 화면:
+
+- `http://127.0.0.1:8000/`
+
 초기 API:
 
 - `GET /health`

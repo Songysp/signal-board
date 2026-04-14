@@ -57,6 +57,7 @@ Implemented now:
 11. DB-backed repeated polling is available through `poll-loop`.
 12. CLI fetch/DB/Kakao failures are converted into operator-friendly messages.
 13. Minimal FastAPI surface is available for watches, polling, alerts, preview, and Kakao test sends.
+14. A thin web management UI is served from `GET /`.
 
 Not implemented yet:
 
@@ -177,6 +178,7 @@ Run locally:
 
 Implemented endpoints:
 
+- `GET /`
 - `GET /health`
 - `GET /watches`
 - `POST /watches`
@@ -285,4 +287,4 @@ The intended end state is:
 In order of priority:
 
 1. finish PostgreSQL local connection and end-to-end DB-backed polling
-2. build the first minimal web management UI
+2. improve the thin management UI with authentication and better event views
