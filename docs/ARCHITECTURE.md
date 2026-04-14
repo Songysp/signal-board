@@ -206,6 +206,19 @@ Practical usage today:
 - PostgreSQL-backed repeated polling
 - intentionally simple while-loop runner for the MVP
 - defaults to every 4 hours to reduce Naver rate-limit/blocking risk
+- intervals below 4 hours require explicit `--allow-fast-poll` and are for local development only
+
+## Naver Collection Safety Policy
+
+SignalBoard uses saved Naver real estate URLs as user-provided watch targets. For the MVP, collection must stay conservative:
+
+- default repeated polling interval is 4 hours
+- unattended repeated polling below 4 hours is blocked by default
+- short intervals require explicit `--allow-fast-poll` and should only be used for local development
+- do not rotate IPs
+- do not bypass Captcha or rate limits
+- do not use private login sessions or cookies to access non-public data
+- if Naver blocks or changes an endpoint, stop and fix the integration rather than bypassing controls
 
 ## Search URL Strategy And Limits
 

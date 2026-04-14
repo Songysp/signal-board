@@ -22,6 +22,8 @@ from app.storage import add_watch, init_db, list_watches
 
 app = typer.Typer(help="SignalBoard CLI")
 
+SAFE_NAVER_POLL_INTERVAL_SECONDS = 14_400
+
 
 def _default_state_file(search_url: str) -> Path:
     digest = hashlib.sha1(search_url.encode("utf-8")).hexdigest()[:12]
@@ -58,6 +60,28 @@ def _format_db_error(exc: Exception) -> str:
         "PostgreSQL 연결에 실패했습니다. Docker Desktop이 켜져 있는지 확인한 뒤 "
         "`docker compose up -d postgres`를 실행해주세요. "
         f"원인: {exc}"
+    )
+
+
+def _validate_poll_interval(interval_seconds: int, *, allow_fast_poll: bool) -> None:
+    if interval_seconds >= SAFE_NAVER_POLL_INTERVAL_SECONDS:
+        return
+    if allow_fast_poll:
+        typer.secho(
+            (
+                "warning: fast polling is enabled for development only. "
+                "Do not use this for unattended Naver collection."
+            ),
+            fg=typer.colors.YELLOW,
+            err=True,
+        )
+        return
+    _abort(
+        (
+            f"네이버 차단/약관 리스크를 줄이기 위해 반복 수집 간격은 기본 "
+            f"{SAFE_NAVER_POLL_INTERVAL_SECONDS}초(4시간) 이상이어야 합니다. "
+            "개발용으로만 더 짧게 테스트하려면 --allow-fast-poll 옵션을 명시하세요."
+        )
     )
 
 
@@ -171,9 +195,19 @@ def poll_command() -> None:
 
 @app.command("poll-loop")
 def poll_loop_command(
-    interval_seconds: int = typer.Option(14400, min=600, help="Seconds to wait between DB-backed polls"),
+    interval_seconds: int = typer.Option(
+        SAFE_NAVER_POLL_INTERVAL_SECONDS,
+        min=60,
+        help="Seconds to wait between DB-backed polls",
+    ),
+    allow_fast_poll: bool = typer.Option(
+        False,
+        "--allow-fast-poll",
+        help="Allow intervals below 4 hours for local development only",
+    ),
 ) -> None:
     """Continuously poll all active PostgreSQL-backed watches."""
+    _validate_poll_interval(interval_seconds, allow_fast_poll=allow_fast_poll)
     typer.echo(f"polling DB watches every {interval_seconds}s; press Ctrl+C to stop")
     try:
         while True:
@@ -242,9 +276,19 @@ def poll_url_loop(
     label: str = typer.Option("빠른테스트", help="Label used in Kakao alert messages"),
     state_file: Path | None = typer.Option(None, help="JSON file storing previously seen listing IDs"),
     send_kakao: bool = typer.Option(True, "--send-kakao/--no-send-kakao", help="Send Kakao alerts for new listings"),
-    interval_seconds: int = typer.Option(14400, min=600, help="Seconds to wait between polls"),
+    interval_seconds: int = typer.Option(
+        SAFE_NAVER_POLL_INTERVAL_SECONDS,
+        min=60,
+        help="Seconds to wait between polls",
+    ),
+    allow_fast_poll: bool = typer.Option(
+        False,
+        "--allow-fast-poll",
+        help="Allow intervals below 4 hours for local development only",
+    ),
 ) -> None:
     """Continuously poll a single URL without PostgreSQL."""
+    _validate_poll_interval(interval_seconds, allow_fast_poll=allow_fast_poll)
     search_url = _resolve_search_url(search_url)
     typer.echo(f"polling every {interval_seconds}s; press Ctrl+C to stop")
     try:
