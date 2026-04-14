@@ -132,7 +132,7 @@
 ## ACTIVE
 
 ### T008 PostgreSQL End-to-End Wiring
-- Status: `ACTIVE`
+- Status: `DONE`
 - Goal: DB가 실제 떠 있는 환경에서 `add-watch -> poll -> alert_events` 전체 플로우 검증
 - Why:
   - 현재 schema와 저장 함수는 구현돼 있지만 로컬 DB 연결 확인이 아직 완전히 끝나지 않음
@@ -147,6 +147,12 @@
   2. `python -m app.cli add-watch "테스트" "<url>"`
   3. `python -m app.cli poll`
   4. DB row 확인 또는 CLI 결과 확인
+- Completed verification:
+  - `docker compose up -d postgres`
+  - `python -m app.cli db-check`
+  - `python -m app.cli init-db`
+  - `python -m app.cli poll`
+  - first poll baseline, second poll `new=0`
 
 ### T009 Fetch Failure Hardening
 - Status: `ACTIVE`
@@ -163,10 +169,16 @@
   - 비정상 응답
   - 각각에서 다른 오류 메시지 확인
 
+Partial progress:
+
+- Naver `null` listing response is treated as an empty result instead of crashing.
+- `poll-url` and DB-backed baseline detection now handle zero-listing baselines.
+- More detailed fetch failure categorization remains active.
+
 ## NEXT
 
 ### T010 Repeated Poll Runner
-- Status: `NEXT`
+- Status: `DONE`
 - Goal: 일정 간격으로 반복 실행되는 경량 러너 추가
 - Scope:
   - 우선은 단순 while loop + sleep
@@ -175,6 +187,9 @@
   - `run` 또는 `watch-loop` 계열 CLI
 - Verification:
   - 60초 또는 300초 간격 반복 동작
+- Completed output:
+  - `poll-url-loop`
+  - `poll-loop`
 
 ### T011 API Surface For Watches
 - Status: `NEXT`

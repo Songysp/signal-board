@@ -2,5 +2,8 @@
 .venv/
 .signalboard.tokens.json
 .signalboard-watch-*.json
+.claude/
+.omx/
+*.egg-info/
 __pycache__/
 *.pyc

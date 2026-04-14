@@ -27,7 +27,31 @@
 4. 신규 매물 diff 로직
 5. PostgreSQL 스키마와 저장 함수
 6. DB 없이 바로 써볼 수 있는 `preview-search`, `poll-url` CLI
+7. Docker Compose 기반 로컬 PostgreSQL
+8. DB-backed `poll` 및 `poll-loop` CLI
 
 상세 방향과 최신 구현 상태:
 
 - [ARCHITECTURE.md](/Users/song/Documents/signal-board/docs/ARCHITECTURE.md)
+
+## Local MVP Runbook
+
+```powershell
+docker compose up -d postgres
+.\.venv\bin\python.exe -m app.cli init-db
+.\.venv\bin\python.exe -m app.cli db-check
+.\.venv\bin\python.exe -m app.cli preview-search
+.\.venv\bin\python.exe -m app.cli poll
+```
+
+반복 실행:
+
+```powershell
+.\.venv\bin\python.exe -m app.cli poll-loop --interval-seconds 60
+```
+
+DB 없이 단일 URL만 빠르게 테스트:
+
+```powershell
+.\.venv\bin\python.exe -m app.cli poll-url --no-send-kakao
+```

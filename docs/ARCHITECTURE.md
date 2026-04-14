@@ -53,12 +53,14 @@ Implemented now:
 7. PostgreSQL storage schema and repository functions are implemented.
 8. CLI-based manual preview and polling are implemented.
 9. File-based polling without PostgreSQL is implemented for fast local MVP testing.
+10. Docker Compose local PostgreSQL is configured.
+11. DB-backed repeated polling is available through `poll-loop`.
 
 Not implemented yet:
 
-1. always-on scheduler/daemon runner
+1. production service/daemon runner
 2. thin web management UI
-3. production-ready API surface
+3. production-ready API surface and installed API dependencies
 4. Kakao friend send / Kakao channel send
 5. dashboard screens
 6. non-real-estate economic data ingestion
@@ -155,9 +157,11 @@ Implemented commands include:
 - `preview-search`
 - `poll-url`
 - `init-db`
+- `db-check`
 - `add-watch`
 - `list-watches`
 - `poll`
+- `poll-loop`
 
 Practical usage today:
 
@@ -173,6 +177,10 @@ Practical usage today:
 3. `poll`
 - PostgreSQL-backed polling for registered watches
 - depends on a running database
+
+4. `poll-loop`
+- PostgreSQL-backed repeated polling
+- intentionally simple while-loop runner for the MVP
 
 ## Search URL Strategy And Limits
 
@@ -255,7 +263,6 @@ The intended end state is:
 In order of priority:
 
 1. finish PostgreSQL local connection and end-to-end DB-backed polling
-2. add resilient error handling around Naver fetch failures
-3. add a lightweight scheduler loop for repeated polling
-4. expose watch registration and poll history through a thin API
-5. build the first minimal web management UI
+2. add more resilient error handling around Naver fetch failures
+3. expose watch registration and poll history through a thin API
+4. build the first minimal web management UI

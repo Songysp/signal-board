@@ -32,6 +32,7 @@ class Settings:
     kakao_access_token: str | None = None
     kakao_refresh_token: str | None = None
     kakao_redirect_uri: str = "http://127.0.0.1:8765/kakao/callback"
+    naver_search_url: str | None = None
     skip_ssl_verify: bool = False
 
 
@@ -48,6 +49,7 @@ def load_settings() -> Settings:
             "KAKAO_REDIRECT_URI",
             dotenv.get("KAKAO_REDIRECT_URI", "http://127.0.0.1:8765/kakao/callback"),
         ),
+        naver_search_url=os.getenv("NAVER_SEARCH_URL", dotenv.get("NAVER_SEARCH_URL")),
         skip_ssl_verify=os.getenv("SKIP_SSL_VERIFY", dotenv.get("SKIP_SSL_VERIFY", "0")) in {"1", "true", "TRUE"},
     )
 

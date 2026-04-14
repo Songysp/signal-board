@@ -40,7 +40,14 @@ class NaverSearchClient:
         except json.JSONDecodeError as exc:
             raise NaverFetchError("Naver articleList returned non-JSON response.") from exc
 
+        if payload is None:
+            return []
+        if not isinstance(payload, dict):
+            raise NaverFetchError("Naver articleList returned an unexpected JSON shape.")
+
         body = payload.get("body")
+        if body is None:
+            return []
         if not isinstance(body, list):
             raise NaverFetchError("Naver articleList response did not include a listing body.")
 
