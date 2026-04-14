@@ -292,6 +292,24 @@ Completed output:
 
 ## BLOCKED
 
+### T022 Complex To Article Listing Path
+- Status: `BLOCKED`
+- Goal: 네이버 지도 단지/클러스터 결과에서 개별 매물 목록까지 안전하게 내려가기
+- Root cause:
+  - 현재 URL은 지도에 단지/클러스터 결과가 있음
+  - mobile `articleList`는 `null` 반환
+  - mobile `complexList`는 단지 결과와 매물 카운트를 반환
+  - 신형 화면은 `fin.land.naver.com/front-api/v1/...` 계열을 쓰는 것으로 보이나 직접 확인 시 `TOO_MANY_REQUESTS`가 반환됨
+- Safety decision:
+  - IP 우회, Captcha 우회, 요청 반복, 로그인 세션 우회는 하지 않음
+  - 그래서 현재는 false `total=0`을 막는 데서 멈춤
+- Need:
+  - 실제 브라우저 DevTools Network에서 해당 URL을 열었을 때 성공하는 매물 목록 API 요청 1건의 URL, method, request payload, response shape
+  - 또는 네이버 외 공식/허가된 데이터 소스 선택
+- Verification so far:
+  - `preview-search` now reports a clear mismatch instead of `total=0`
+  - `pytest` passes
+
 ### T019 Kakao Friend List / Friend Send
 - Status: `BLOCKED`
 - Blocker:
