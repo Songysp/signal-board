@@ -155,7 +155,7 @@
   - first poll baseline, second poll `new=0`
 
 ### T009 Fetch Failure Hardening
-- Status: `ACTIVE`
+- Status: `DONE`
 - Goal: Naver fetch 실패를 명시적인 오류 상태로 다루기
 - Why:
   - 현재는 구조 변경, 빈 결과, 지역 추론 실패가 모두 예외로 섞일 수 있음
@@ -169,11 +169,12 @@
   - 비정상 응답
   - 각각에서 다른 오류 메시지 확인
 
-Partial progress:
+Completed output:
 
 - Naver `null` listing response is treated as an empty result instead of crashing.
 - `poll-url` and DB-backed baseline detection now handle zero-listing baselines.
-- More detailed fetch failure categorization remains active.
+- CLI commands now show friendly Korean errors for unsupported URLs, missing map coordinates, region resolution failures, Naver rate limits, Kakao send failures, and DB connection failures.
+- Regression tests cover null listing responses and key CLI error formatting.
 
 ## NEXT
 
