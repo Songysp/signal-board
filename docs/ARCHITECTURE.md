@@ -244,6 +244,13 @@ Current live-listing finding:
 - The remaining implementation gap is a safe, low-frequency path from complex/cluster results to article-level listings without bypassing Naver controls.
 - Direct probing of the newer `front-api/v1` article paths returned `TOO_MANY_REQUESTS`, so further probing is paused until a successful browser Network request can be provided or a permitted data source is chosen.
 
+Browser-rendered scraping fallback status:
+
+- Playwright and Selenium are not currently usable in this MSYS Python environment.
+- Direct Chrome DevTools Protocol access works, but the rendered `fin.land` page receives `429 TOO_MANY_REQUESTS` for data APIs and therefore does not render listing DOM.
+- The original `new.land` URL redirects to `/404` in headless Chrome.
+- Because of the project safety policy, SignalBoard will not bypass DevTools blocking, rotate IPs, reuse private sessions, or work around rate limits.
+
 ## API And UI Direction
 
 The product is still API-first in design, even though the UI is not built yet.

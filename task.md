@@ -292,6 +292,27 @@ Completed output:
 
 ## BLOCKED
 
+### T023 Browser URL Collector Fallback
+- Status: `BLOCKED`
+- Goal: 네이버 내부 API 직접 매핑 대신 저장 URL을 브라우저로 열고 화면에 렌더링된 결과를 읽는 fallback 수집기 구현
+- Attempts:
+  - Python Playwright optional dependency 검토
+  - Selenium optional dependency 검토
+  - Chrome DevTools Protocol 직접 연결 검토
+- Findings:
+  - Playwright는 현재 MSYS Python 환경에서 wheel을 찾지 못해 설치 불가
+  - Selenium은 `cffi` 빌드 실패로 설치 불가
+  - Chrome CDP 직접 연결은 성공
+  - `fin.land.naver.com` 화면은 열리지만 데이터 API가 `429 TOO_MANY_REQUESTS`라 매물 DOM이 렌더링되지 않음
+  - 원래 `new.land.naver.com/complexes/...` URL은 headless Chrome에서 `/404`로 리다이렉트됨
+- Safety decision:
+  - DevTools 차단 해제, IP 우회, 로그인 세션 우회, Captcha/차단 우회는 하지 않음
+  - 검증 불가능한 크롤러 코드는 추가하지 않음
+- Need:
+  - 사람이 일반 브라우저에서 성공적으로 보는 화면의 허용 가능한 데이터 접근 방식
+  - 또는 네이버 외 공식/허가된 부동산 데이터 소스
+  - 또는 Windows 표준 Python 환경으로 별도 브라우저 자동화 런타임 재구성 후 재검토
+
 ### T022 Complex To Article Listing Path
 - Status: `BLOCKED`
 - Goal: 네이버 지도 단지/클러스터 결과에서 개별 매물 목록까지 안전하게 내려가기
