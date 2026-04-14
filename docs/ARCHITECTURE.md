@@ -56,6 +56,7 @@ Implemented now:
 10. Docker Compose local PostgreSQL is configured.
 11. DB-backed repeated polling is available through `poll-loop`.
 12. CLI fetch/DB/Kakao failures are converted into operator-friendly messages.
+13. Minimal FastAPI surface is available for watches, polling, alerts, preview, and Kakao test sends.
 
 Not implemented yet:
 
@@ -164,6 +165,26 @@ Implemented commands include:
 - `poll`
 - `poll-loop`
 
+## Current API Surface
+
+Install optional API dependencies:
+
+- `python -m pip install -e .[api]`
+
+Run locally:
+
+- `python -m uvicorn app.main:app --reload`
+
+Implemented endpoints:
+
+- `GET /health`
+- `GET /watches`
+- `POST /watches`
+- `POST /poll`
+- `GET /alerts`
+- `POST /preview-search`
+- `POST /kakao/test`
+
 Practical usage today:
 
 1. `preview-search`
@@ -264,5 +285,4 @@ The intended end state is:
 In order of priority:
 
 1. finish PostgreSQL local connection and end-to-end DB-backed polling
-2. expose watch registration and poll history through a thin API
-3. build the first minimal web management UI
+2. build the first minimal web management UI
