@@ -56,6 +56,18 @@
 
 ## DONE
 
+### T020 Naver Safe Collection Guardrails
+- Status: `DONE`
+- Goal: 네이버 수집이 차단/약관 리스크를 키우지 않도록 보수 운영 기본값을 코드에 고정
+- Output:
+  - 반복 poll 기본 간격 4시간 유지
+  - 4시간 미만 반복 poll은 기본 차단
+  - 개발용 짧은 반복 poll은 `--allow-fast-poll` 명시 필요
+  - README/ARCHITECTURE에 IP 우회, Captcha 우회, 로그인 세션 우회 금지 명시
+- Verification:
+  - `python -m app.cli poll-loop --help`
+  - `pytest` guardrail tests
+
 ### T001 Project Separation
 - Status: `DONE`
 - Goal: SignalBoard를 독립 폴더/독립 repo로 분리
