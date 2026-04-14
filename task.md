@@ -193,7 +193,7 @@ Completed output:
   - `poll-loop`
 
 ### T011 API Surface For Watches
-- Status: `NEXT`
+- Status: `DONE`
 - Goal: 웹/앱에서 재사용할 최소 API 추가
 - Scope:
   - watch 등록
@@ -206,6 +206,15 @@ Completed output:
   - `/health`
   - `/watches`
   - `/alerts`
+- Completed output:
+  - `GET /health`
+  - `GET /watches`
+  - `POST /watches`
+  - `POST /poll`
+  - `GET /alerts`
+  - `POST /preview-search`
+  - `POST /kakao/test`
+  - API dependencies pinned to FastAPI `0.99.x` / Pydantic `1.x` for this Python environment
 
 ### T012 Thin Web UI
 - Status: `NEXT`

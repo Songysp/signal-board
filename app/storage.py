@@ -142,6 +142,32 @@ def list_watches() -> list[tuple]:
         return list(cursor.fetchall())
 
 
+def list_alert_events(limit: int = 50) -> list[tuple]:
+    with connect() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT
+                e.id,
+                e.watch_target_id,
+                w.label,
+                e.external_listing_id,
+                e.event_type,
+                e.status,
+                e.message,
+                e.failure_reason,
+                e.created_at,
+                e.sent_at
+            FROM alert_events e
+            JOIN watch_targets w ON w.id = e.watch_target_id
+            ORDER BY e.created_at DESC, e.id DESC
+            LIMIT %s
+            """,
+            (limit,),
+        )
+        return list(cursor.fetchall())
+
+
 def get_active_watches() -> list[tuple]:
     with connect() as conn:
         cursor = conn.cursor()

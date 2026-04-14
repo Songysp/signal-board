@@ -50,6 +50,23 @@ docker compose up -d postgres
 .\.venv\bin\python.exe -m app.cli poll-loop --interval-seconds 60
 ```
 
+API 실행:
+
+```powershell
+.\.venv\bin\python.exe -m pip install -e .[api]
+.\.venv\bin\python.exe -m uvicorn app.main:app --reload
+```
+
+초기 API:
+
+- `GET /health`
+- `GET /watches`
+- `POST /watches`
+- `POST /poll`
+- `GET /alerts`
+- `POST /preview-search`
+- `POST /kakao/test`
+
 DB 없이 단일 URL만 빠르게 테스트:
 
 ```powershell

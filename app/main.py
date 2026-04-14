@@ -8,7 +8,29 @@ from app.config import settings
 from app.kakao_notifier import KakaoMessageError, KakaoNotifier
 from app.kakao_tokens import KakaoTokenManager
 from app.naver import NaverFetchError, NaverSearchClient
-from app.storage import add_watch, list_watches
+from app.storage import add_watch, list_alert_events, list_watches
+
+try:
+    from pydantic import BaseModel, Field
+except ImportError:
+    BaseModel = object  # type: ignore[assignment]
+
+    def Field(default=None, **_: Any):  # type: ignore[no-redef]
+        return default
+
+
+class WatchCreate(BaseModel):
+    label: str = Field(min_length=1)
+    search_url: str = Field(min_length=1)
+
+
+class PreviewRequest(BaseModel):
+    search_url: str | None = None
+    limit: int = Field(default=10, ge=1, le=50)
+
+
+class KakaoTestRequest(BaseModel):
+    message: str = "[부동산알리미] SignalBoard API 알림 테스트\n카카오 나에게 메시지 연결이 정상입니다."
 
 
 def health() -> dict[str, str]:
@@ -18,20 +40,8 @@ def health() -> dict[str, str]:
 def create_app() -> Any:
     try:
         from fastapi import FastAPI, HTTPException
-        from pydantic import BaseModel, Field
     except ImportError as exc:
         raise RuntimeError("Install API dependencies first: python -m pip install -e .[api]") from exc
-
-    class WatchCreate(BaseModel):
-        label: str = Field(min_length=1)
-        search_url: str = Field(min_length=1)
-
-    class PreviewRequest(BaseModel):
-        search_url: str | None = None
-        limit: int = Field(default=10, ge=1, le=50)
-
-    class KakaoTestRequest(BaseModel):
-        message: str = "[부동산알리미] SignalBoard API 알림 테스트\n카카오 나에게 메시지 연결이 정상입니다."
 
     api = FastAPI(title=settings.app_name, version="0.1.0")
 
@@ -74,6 +84,28 @@ def create_app() -> Any:
         except Exception as exc:
             raise HTTPException(status_code=500, detail=str(exc)) from exc
         return [asdict(result) for result in results]
+
+    @api.get("/alerts")
+    def get_alerts(limit: int = 50) -> list[dict]:
+        try:
+            rows = list_alert_events(limit=max(1, min(limit, 200)))
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="PostgreSQL connection failed") from exc
+        return [
+            {
+                "id": row[0],
+                "watch_target_id": row[1],
+                "watch_label": row[2],
+                "external_listing_id": row[3],
+                "event_type": row[4],
+                "status": row[5],
+                "message": row[6],
+                "failure_reason": row[7],
+                "created_at": row[8],
+                "sent_at": row[9],
+            }
+            for row in rows
+        ]
 
     @api.post("/preview-search")
     def preview_search(payload: PreviewRequest) -> dict:
