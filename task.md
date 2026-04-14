@@ -217,7 +217,7 @@ Completed output:
   - API dependencies pinned to FastAPI `0.99.x` / Pydantic `1.x` for this Python environment
 
 ### T012 Thin Web UI
-- Status: `NEXT`
+- Status: `DONE`
 - Goal: 관리용 최소 웹 화면 추가
 - Scope:
   - 감시 조건 등록
@@ -226,6 +226,14 @@ Completed output:
   - Kakao 연결 상태 보기
 - Verification:
   - 브라우저에서 watch 등록 후 poll 결과 조회
+- Completed output:
+  - `GET /` management page
+  - watch registration form
+  - watch list viewer
+  - manual poll button
+  - alert history viewer
+  - Kakao test button
+  - API test coverage for dashboard HTML
 
 ## LATER
 

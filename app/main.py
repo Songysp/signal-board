@@ -9,6 +9,7 @@ from app.kakao_notifier import KakaoMessageError, KakaoNotifier
 from app.kakao_tokens import KakaoTokenManager
 from app.naver import NaverFetchError, NaverSearchClient
 from app.storage import add_watch, list_alert_events, list_watches
+from app.web import render_dashboard
 
 try:
     from pydantic import BaseModel, Field
@@ -40,6 +41,7 @@ def health() -> dict[str, str]:
 def create_app() -> Any:
     try:
         from fastapi import FastAPI, HTTPException
+        from fastapi.responses import HTMLResponse
     except ImportError as exc:
         raise RuntimeError("Install API dependencies first: python -m pip install -e .[api]") from exc
 
@@ -48,6 +50,10 @@ def create_app() -> Any:
     @api.get("/health")
     def api_health() -> dict[str, str]:
         return health()
+
+    @api.get("/", response_class=HTMLResponse)
+    def dashboard() -> str:
+        return render_dashboard()
 
     @api.get("/watches")
     def get_watches() -> list[dict]:

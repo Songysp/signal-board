@@ -13,6 +13,15 @@ def test_health_endpoint() -> None:
     assert response.json()["status"] == "ok"
 
 
+def test_dashboard_endpoint_returns_html() -> None:
+    assert app is not None
+    response = TestClient(app).get("/")
+
+    assert response.status_code == 200
+    assert "SignalBoard" in response.text
+    assert "감시 URL 등록" in response.text
+
+
 def test_preview_search_endpoint_uses_configured_url() -> None:
     assert app is not None
     response = TestClient(app).post("/preview-search", json={"limit": 1})
