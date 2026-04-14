@@ -47,8 +47,10 @@ docker compose up -d postgres
 반복 실행:
 
 ```powershell
-.\.venv\bin\python.exe -m app.cli poll-loop --interval-seconds 60
+.\.venv\bin\python.exe -m app.cli poll-loop
 ```
+
+기본 반복 간격은 네이버 차단 리스크를 줄이기 위해 4시간입니다. 필요할 때만 `--interval-seconds 14400`처럼 직접 조정합니다.
 
 API 실행:
 

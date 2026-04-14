@@ -205,6 +205,7 @@ Practical usage today:
 4. `poll-loop`
 - PostgreSQL-backed repeated polling
 - intentionally simple while-loop runner for the MVP
+- defaults to every 4 hours to reduce Naver rate-limit/blocking risk
 
 ## Search URL Strategy And Limits
 
