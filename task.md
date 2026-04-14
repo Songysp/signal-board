@@ -68,6 +68,19 @@
   - `python -m app.cli poll-loop --help`
   - `pytest` guardrail tests
 
+### T021 Prevent False Zero Listing Reports
+- Status: `DONE`
+- Goal: 네이버 지도에는 결과가 있는데 SignalBoard가 `total=0`으로 오해하는 상황 방지
+- Root cause:
+  - 일부 지도 URL은 단지/클러스터 결과를 반환하지만, 현재 사용하는 mobile `articleList` endpoint는 `null`을 반환함
+- Output:
+  - `articleList`가 비어 있을 때 `complexList`를 확인
+  - 단지/클러스터 매물 카운트가 있으면 `total=0` 대신 명시 오류로 중단
+  - API 테스트가 실제 네이버 응답에 흔들리지 않도록 mock 기반으로 변경
+- Verification:
+  - `python -m app.cli preview-search` now stops with a clear mismatch error for the current URL
+  - `pytest` regression tests
+
 ### T001 Project Separation
 - Status: `DONE`
 - Goal: SignalBoard를 독립 폴더/독립 repo로 분리

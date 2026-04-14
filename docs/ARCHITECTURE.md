@@ -237,6 +237,12 @@ Known limits:
 
 So the MVP is fast and usable, but not fully canonical yet.
 
+Current live-listing finding:
+
+- Some map URLs return complex/cluster-level results while the mobile `articleList` endpoint returns `null`.
+- SignalBoard now detects that mismatch and stops instead of reporting a false `total=0`.
+- The remaining implementation gap is a safe, low-frequency path from complex/cluster results to article-level listings without bypassing Naver controls.
+
 ## API And UI Direction
 
 The product is still API-first in design, even though the UI is not built yet.

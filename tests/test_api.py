@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
+import app.main as main
 from app.main import app
 
 
@@ -22,7 +23,13 @@ def test_dashboard_endpoint_returns_html() -> None:
     assert "감시 URL 등록" in response.text
 
 
-def test_preview_search_endpoint_uses_configured_url() -> None:
+def test_preview_search_endpoint_uses_configured_url(monkeypatch) -> None:
+    class FakeNaverSearchClient:
+        def fetch_listings(self, search_url):
+            return []
+
+    monkeypatch.setattr(main, "NaverSearchClient", FakeNaverSearchClient)
+
     assert app is not None
     response = TestClient(app).post("/preview-search", json={"limit": 1})
 
