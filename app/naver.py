@@ -41,12 +41,14 @@ class NaverSearchClient:
             raise NaverFetchError("Naver articleList returned non-JSON response.") from exc
 
         if payload is None:
+            self._raise_if_complex_results_exist(params)
             return []
         if not isinstance(payload, dict):
             raise NaverFetchError("Naver articleList returned an unexpected JSON shape.")
 
         body = payload.get("body")
         if body is None:
+            self._raise_if_complex_results_exist(params)
             return []
         if not isinstance(body, list):
             raise NaverFetchError("Naver articleList response did not include a listing body.")
@@ -61,6 +63,46 @@ class NaverSearchClient:
                 seen.add(listing.listing_id)
                 listings.append(listing)
         return listings
+
+    def _raise_if_complex_results_exist(self, params: dict[str, str]) -> None:
+        probe_params = {key: value for key, value in params.items() if not key.startswith("_")}
+        try:
+            response = self._get("https://m.land.naver.com/cluster/ajax/complexList", params=probe_params)
+            payload = response.json()
+        except (NaverFetchError, json.JSONDecodeError):
+            return
+        if not isinstance(payload, dict):
+            return
+
+        complexes = payload.get("result")
+        if not isinstance(complexes, list):
+            return
+
+        total_article_count = 0
+        sample_names: list[str] = []
+        for item in complexes:
+            if not isinstance(item, dict):
+                continue
+            count = _to_int(str(item.get("totalAtclCnt") or "0")) or 0
+            count += _to_int(str(item.get("dealCnt") or "0")) or 0
+            count += _to_int(str(item.get("leaseCnt") or "0")) or 0
+            count += _to_int(str(item.get("rentCnt") or "0")) or 0
+            total_article_count += count
+            name = item.get("hscpNm")
+            if name and len(sample_names) < 3:
+                sample_names.append(str(name))
+
+        if total_article_count <= 0:
+            return
+
+        sample_text = f" 예: {', '.join(sample_names)}" if sample_names else ""
+        raise NaverFetchError(
+            (
+                "Naver returned complex-level results, but the article-level listing endpoint returned empty. "
+                "SignalBoard is stopping instead of reporting a false total=0."
+                f"{sample_text}"
+            )
+        )
 
     def _build_mobile_article_params(self, filters: NaverSearchFilters) -> dict[str, str]:
         if filters.center_lat is None or filters.center_lon is None:

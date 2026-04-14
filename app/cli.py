@@ -52,6 +52,12 @@ def _format_naver_error(exc: Exception) -> str:
         return "네이버 지역 코드(cortarNo)를 찾지 못했습니다. URL의 지도 위치를 조금 이동하거나 더 구체적인 지역에서 다시 저장해보세요."
     if "HTTP 429" in message or "TOO_MANY_REQUESTS" in message:
         return "네이버 요청 제한에 걸렸습니다. 잠시 후 다시 시도해주세요."
+    if "complex-level results" in message:
+        return (
+            "네이버 지도에는 단지/클러스터 결과가 있지만, 현재 SignalBoard가 사용하는 매물 상세 조회 경로는 "
+            "빈 응답을 반환했습니다. 거짓으로 total=0 처리하지 않고 중단합니다. "
+            "이 URL은 단지 결과에서 매물 상세로 내려가는 수집 경로 보강이 필요합니다."
+        )
     return f"네이버 매물 조회에 실패했습니다: {message}"
 
 
