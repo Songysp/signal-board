@@ -10,7 +10,13 @@ from app.db import connect
 from app.debug import mask_secret
 from app.kakao_notifier import KakaoMessageError, KakaoNotifier
 from app.kakao_tokens import KakaoTokenManager
-from app.naver import NaverSearchClient, build_legacy_search_url, filters_as_dict, parse_search_filters
+from app.naver import (
+    NaverFetchError,
+    NaverSearchClient,
+    build_legacy_search_url,
+    filters_as_dict,
+    parse_search_filters,
+)
 from app.storage import add_watch, init_db, list_watches
 
 
@@ -27,6 +33,32 @@ def _resolve_search_url(search_url: str | None) -> str:
     if not resolved:
         raise typer.BadParameter("Search URL is required or NAVER_SEARCH_URL must be set in .env")
     return resolved
+
+
+def _abort(message: str) -> None:
+    typer.secho(f"error: {message}", fg=typer.colors.RED, err=True)
+    raise typer.Exit(1)
+
+
+def _format_naver_error(exc: Exception) -> str:
+    message = str(exc)
+    if "Unsupported Naver host" in message:
+        return "지원하지 않는 네이버 URL입니다. fin.land.naver.com, new.land.naver.com, m.land.naver.com URL을 넣어주세요."
+    if "center coordinates" in message or "center coordinates are required" in message:
+        return "검색 URL에 지도 중심 좌표가 없습니다. 네이버부동산에서 조건을 만든 뒤 지도 URL 전체를 복사해주세요."
+    if "Could not resolve cortarNo" in message:
+        return "네이버 지역 코드(cortarNo)를 찾지 못했습니다. URL의 지도 위치를 조금 이동하거나 더 구체적인 지역에서 다시 저장해보세요."
+    if "HTTP 429" in message or "TOO_MANY_REQUESTS" in message:
+        return "네이버 요청 제한에 걸렸습니다. 잠시 후 다시 시도해주세요."
+    return f"네이버 매물 조회에 실패했습니다: {message}"
+
+
+def _format_db_error(exc: Exception) -> str:
+    return (
+        "PostgreSQL 연결에 실패했습니다. Docker Desktop이 켜져 있는지 확인한 뒤 "
+        "`docker compose up -d postgres`를 실행해주세요. "
+        f"원인: {exc}"
+    )
 
 
 def _build_token_manager() -> KakaoTokenManager:
@@ -58,9 +90,7 @@ def init_db_command() -> None:
     try:
         init_db()
     except Exception as exc:
-        raise typer.BadParameter(
-            "PostgreSQL connection failed. Start the DB first, for example: docker compose up -d postgres"
-        ) from exc
+        _abort(_format_db_error(exc))
     typer.echo("database initialized")
 
 
@@ -73,9 +103,7 @@ def db_check_command() -> None:
             cursor.execute("SELECT 1")
             cursor.fetchone()
     except Exception as exc:
-        raise typer.BadParameter(
-            "PostgreSQL connection failed. Start the DB first, for example: docker compose up -d postgres"
-        ) from exc
+        _abort(_format_db_error(exc))
     typer.echo("database connection ok")
 
 
@@ -85,14 +113,22 @@ def add_watch_command(
     search_url: str = typer.Argument(..., help="Naver saved search URL"),
 ) -> None:
     """Register or update a Naver saved search URL."""
-    watch_id = add_watch(label, search_url)
+    try:
+        watch_id = add_watch(label, search_url)
+    except NaverFetchError as exc:
+        _abort(_format_naver_error(exc))
+    except Exception as exc:
+        _abort(_format_db_error(exc))
     typer.echo(f"watch saved: id={watch_id}")
 
 
 @app.command("list-watches")
 def list_watches_command() -> None:
     """Show all registered watch targets."""
-    rows = list_watches()
+    try:
+        rows = list_watches()
+    except Exception as exc:
+        _abort(_format_db_error(exc))
     if not rows:
         typer.echo("no watches registered")
         return
@@ -107,8 +143,17 @@ def list_watches_command() -> None:
 @app.command("poll")
 def poll_command() -> None:
     """Fetch all active Naver watches and send alerts for newly seen listings."""
-    service = AlertService(_build_notifier())
-    results = service.poll_all()
+    try:
+        service = AlertService(_build_notifier())
+        results = service.poll_all()
+    except NaverFetchError as exc:
+        _abort(_format_naver_error(exc))
+    except KakaoMessageError as exc:
+        _abort(f"카카오 메시지 발송에 실패했습니다: {exc}")
+    except typer.BadParameter as exc:
+        _abort(str(exc))
+    except Exception as exc:
+        _abort(_format_db_error(exc))
     if not results:
         typer.echo("no active watches")
         return
@@ -143,7 +188,10 @@ def inspect_search_url(
     search_url: str = typer.Argument(..., help="Naver search URL to inspect"),
 ) -> None:
     """Parse a Naver search URL and show normalized filters plus a legacy approximation."""
-    filters = parse_search_filters(search_url)
+    try:
+        filters = parse_search_filters(search_url)
+    except NaverFetchError as exc:
+        _abort(_format_naver_error(exc))
     typer.echo(json.dumps(filters_as_dict(filters), ensure_ascii=False, indent=2))
     typer.echo("")
     typer.echo("legacy_url_approximation:")
@@ -158,7 +206,10 @@ def preview_search(
     """Fetch a Naver search once and print parsed listings without DB writes."""
     search_url = _resolve_search_url(search_url)
     client = NaverSearchClient()
-    listings = client.fetch_listings(search_url)
+    try:
+        listings = client.fetch_listings(search_url)
+    except NaverFetchError as exc:
+        _abort(_format_naver_error(exc))
     typer.echo(f"total={len(listings)}")
     for listing in listings[:limit]:
         lines = [
@@ -212,7 +263,10 @@ def _poll_url_once(
     send_kakao: bool,
 ) -> None:
     client = NaverSearchClient()
-    listings = client.fetch_listings(search_url)
+    try:
+        listings = client.fetch_listings(search_url)
+    except NaverFetchError as exc:
+        _abort(_format_naver_error(exc))
     target_file = state_file or _default_state_file(search_url)
 
     previous_ids: set[str] = set()
@@ -245,13 +299,19 @@ def _poll_url_once(
     if not new_listings:
         return
 
-    notifier = _build_notifier() if send_kakao else None
+    try:
+        notifier = _build_notifier() if send_kakao else None
+    except typer.BadParameter as exc:
+        _abort(str(exc))
     for listing in new_listings:
         message = format_listing_message(label, listing)
         typer.echo(message)
         typer.echo("")
         if notifier is not None:
-            notifier.send_text(message, web_url=listing.detail_url or search_url)
+            try:
+                notifier.send_text(message, web_url=listing.detail_url or search_url)
+            except KakaoMessageError as exc:
+                _abort(f"카카오 메시지 발송에 실패했습니다: {exc}")
 
 
 @app.command("send-test-kakao")

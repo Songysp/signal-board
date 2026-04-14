@@ -55,6 +55,7 @@ Implemented now:
 9. File-based polling without PostgreSQL is implemented for fast local MVP testing.
 10. Docker Compose local PostgreSQL is configured.
 11. DB-backed repeated polling is available through `poll-loop`.
+12. CLI fetch/DB/Kakao failures are converted into operator-friendly messages.
 
 Not implemented yet:
 
@@ -263,6 +264,5 @@ The intended end state is:
 In order of priority:
 
 1. finish PostgreSQL local connection and end-to-end DB-backed polling
-2. add more resilient error handling around Naver fetch failures
-3. expose watch registration and poll history through a thin API
-4. build the first minimal web management UI
+2. expose watch registration and poll history through a thin API
+3. build the first minimal web management UI
