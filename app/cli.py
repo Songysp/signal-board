@@ -171,7 +171,7 @@ def poll_command() -> None:
 
 @app.command("poll-loop")
 def poll_loop_command(
-    interval_seconds: int = typer.Option(60, min=10, help="Seconds to wait between DB-backed polls"),
+    interval_seconds: int = typer.Option(14400, min=600, help="Seconds to wait between DB-backed polls"),
 ) -> None:
     """Continuously poll all active PostgreSQL-backed watches."""
     typer.echo(f"polling DB watches every {interval_seconds}s; press Ctrl+C to stop")
@@ -242,7 +242,7 @@ def poll_url_loop(
     label: str = typer.Option("빠른테스트", help="Label used in Kakao alert messages"),
     state_file: Path | None = typer.Option(None, help="JSON file storing previously seen listing IDs"),
     send_kakao: bool = typer.Option(True, "--send-kakao/--no-send-kakao", help="Send Kakao alerts for new listings"),
-    interval_seconds: int = typer.Option(60, min=10, help="Seconds to wait between polls"),
+    interval_seconds: int = typer.Option(14400, min=600, help="Seconds to wait between polls"),
 ) -> None:
     """Continuously poll a single URL without PostgreSQL."""
     search_url = _resolve_search_url(search_url)

@@ -4,6 +4,7 @@
 .signalboard-watch-*.json
 .claude/
 .omx/
+.logs/
 *.egg-info/
 __pycache__/
 *.pyc
