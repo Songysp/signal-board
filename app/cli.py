@@ -1,10 +1,12 @@
 import typer
 import json
 import hashlib
+import time
 from pathlib import Path
 
 from app.alerts import AlertService, format_listing_message
 from app.config import settings
+from app.db import connect
 from app.debug import mask_secret
 from app.kakao_notifier import KakaoMessageError, KakaoNotifier
 from app.kakao_tokens import KakaoTokenManager
@@ -18,6 +20,13 @@ app = typer.Typer(help="SignalBoard CLI")
 def _default_state_file(search_url: str) -> Path:
     digest = hashlib.sha1(search_url.encode("utf-8")).hexdigest()[:12]
     return Path(f".signalboard-watch-{digest}.json")
+
+
+def _resolve_search_url(search_url: str | None) -> str:
+    resolved = search_url or settings.naver_search_url
+    if not resolved:
+        raise typer.BadParameter("Search URL is required or NAVER_SEARCH_URL must be set in .env")
+    return resolved
 
 
 def _build_token_manager() -> KakaoTokenManager:
@@ -46,8 +55,28 @@ def health() -> None:
 @app.command("init-db")
 def init_db_command() -> None:
     """Create PostgreSQL tables for SignalBoard."""
-    init_db()
+    try:
+        init_db()
+    except Exception as exc:
+        raise typer.BadParameter(
+            "PostgreSQL connection failed. Start the DB first, for example: docker compose up -d postgres"
+        ) from exc
     typer.echo("database initialized")
+
+
+@app.command("db-check")
+def db_check_command() -> None:
+    """Verify PostgreSQL connectivity."""
+    try:
+        with connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+    except Exception as exc:
+        raise typer.BadParameter(
+            "PostgreSQL connection failed. Start the DB first, for example: docker compose up -d postgres"
+        ) from exc
+    typer.echo("database connection ok")
 
 
 @app.command("add-watch")
@@ -95,6 +124,20 @@ def poll_command() -> None:
             )
 
 
+@app.command("poll-loop")
+def poll_loop_command(
+    interval_seconds: int = typer.Option(60, min=10, help="Seconds to wait between DB-backed polls"),
+) -> None:
+    """Continuously poll all active PostgreSQL-backed watches."""
+    typer.echo(f"polling DB watches every {interval_seconds}s; press Ctrl+C to stop")
+    try:
+        while True:
+            poll_command()
+            time.sleep(interval_seconds)
+    except KeyboardInterrupt:
+        typer.echo("polling stopped")
+
+
 @app.command("inspect-search-url")
 def inspect_search_url(
     search_url: str = typer.Argument(..., help="Naver search URL to inspect"),
@@ -109,10 +152,11 @@ def inspect_search_url(
 
 @app.command("preview-search")
 def preview_search(
-    search_url: str = typer.Argument(..., help="Naver search URL to fetch immediately"),
+    search_url: str | None = typer.Argument(None, help="Naver search URL to fetch immediately"),
     limit: int = typer.Option(10, min=1, max=50, help="How many parsed listings to show"),
 ) -> None:
     """Fetch a Naver search once and print parsed listings without DB writes."""
+    search_url = _resolve_search_url(search_url)
     client = NaverSearchClient()
     listings = client.fetch_listings(search_url)
     typer.echo(f"total={len(listings)}")
@@ -131,28 +175,61 @@ def preview_search(
 
 @app.command("poll-url")
 def poll_url(
-    search_url: str = typer.Argument(..., help="Naver search URL to watch"),
+    search_url: str | None = typer.Argument(None, help="Naver search URL to watch"),
     label: str = typer.Option("빠른테스트", help="Label used in Kakao alert messages"),
     state_file: Path | None = typer.Option(None, help="JSON file storing previously seen listing IDs"),
     send_kakao: bool = typer.Option(True, "--send-kakao/--no-send-kakao", help="Send Kakao alerts for new listings"),
 ) -> None:
     """Poll a single URL without PostgreSQL by storing seen IDs in a local JSON file."""
+    search_url = _resolve_search_url(search_url)
+    _poll_url_once(search_url, label=label, state_file=state_file, send_kakao=send_kakao)
+
+
+@app.command("poll-url-loop")
+def poll_url_loop(
+    search_url: str | None = typer.Argument(None, help="Naver search URL to watch"),
+    label: str = typer.Option("빠른테스트", help="Label used in Kakao alert messages"),
+    state_file: Path | None = typer.Option(None, help="JSON file storing previously seen listing IDs"),
+    send_kakao: bool = typer.Option(True, "--send-kakao/--no-send-kakao", help="Send Kakao alerts for new listings"),
+    interval_seconds: int = typer.Option(60, min=10, help="Seconds to wait between polls"),
+) -> None:
+    """Continuously poll a single URL without PostgreSQL."""
+    search_url = _resolve_search_url(search_url)
+    typer.echo(f"polling every {interval_seconds}s; press Ctrl+C to stop")
+    try:
+        while True:
+            _poll_url_once(search_url, label=label, state_file=state_file, send_kakao=send_kakao)
+            time.sleep(interval_seconds)
+    except KeyboardInterrupt:
+        typer.echo("polling stopped")
+
+
+def _poll_url_once(
+    search_url: str,
+    *,
+    label: str,
+    state_file: Path | None,
+    send_kakao: bool,
+) -> None:
     client = NaverSearchClient()
     listings = client.fetch_listings(search_url)
     target_file = state_file or _default_state_file(search_url)
 
     previous_ids: set[str] = set()
+    has_baseline = False
     if target_file.exists():
         try:
             payload = json.loads(target_file.read_text(encoding="utf-8"))
             previous_ids = set(str(item) for item in payload.get("listing_ids", []))
+            has_baseline = bool(payload.get("initialized", True))
         except (OSError, json.JSONDecodeError):
             previous_ids = set()
+            has_baseline = False
 
     current_ids = [listing.listing_id for listing in listings]
-    if not previous_ids:
+    if not has_baseline:
         target_file.write_text(
-            json.dumps({"listing_ids": current_ids}, ensure_ascii=False, indent=2),
+            json.dumps({"initialized": True, "listing_ids": current_ids}, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
         typer.echo(f"baseline-created total={len(listings)} state={target_file}")
@@ -160,7 +237,7 @@ def poll_url(
 
     new_listings = [listing for listing in listings if listing.listing_id not in previous_ids]
     target_file.write_text(
-        json.dumps({"listing_ids": current_ids}, ensure_ascii=False, indent=2),
+        json.dumps({"initialized": True, "listing_ids": current_ids}, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
     typer.echo(f"total={len(listings)} new={len(new_listings)} state={target_file}")
@@ -243,6 +320,7 @@ def show_config() -> None:
     typer.echo(f"kakao_access_token={mask_secret(settings.kakao_access_token)}")
     typer.echo(f"kakao_refresh_token={mask_secret(settings.kakao_refresh_token)}")
     typer.echo(f"kakao_redirect_uri={settings.kakao_redirect_uri}")
+    typer.echo(f"naver_search_url={'set' if settings.naver_search_url else 'missing'}")
     typer.echo(f"skip_ssl_verify={settings.skip_ssl_verify}")
 
 

@@ -8,6 +8,7 @@ from app.storage import (
     existing_listing_ids,
     get_active_watches,
     has_snapshot_history,
+    mark_alert_failed,
     mark_alert_sent,
     save_snapshot,
 )
@@ -62,8 +63,13 @@ class AlertService:
             created = create_alert_event(watch_id, listing, message)
             if not created:
                 continue
-            self.notifier.send_text(message, web_url=listing.detail_url or search_url)
-            mark_alert_sent(watch_id, listing.listing_id)
+            try:
+                self.notifier.send_text(message, web_url=listing.detail_url or search_url)
+            except Exception as exc:
+                mark_alert_failed(watch_id, listing.listing_id, str(exc))
+                raise
+            else:
+                mark_alert_sent(watch_id, listing.listing_id)
 
         return PollResult(
             watch_id=watch_id,

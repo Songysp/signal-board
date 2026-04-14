@@ -61,9 +61,20 @@ CREATE TABLE IF NOT EXISTS alert_events (
     event_type TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'pending',
     message TEXT,
+    failure_reason TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     sent_at TIMESTAMPTZ,
     UNIQUE (watch_target_id, external_listing_id, event_type)
+);
+
+CREATE TABLE IF NOT EXISTS notification_channels (
+    id BIGSERIAL PRIMARY KEY,
+    channel_type TEXT NOT NULL,
+    label TEXT NOT NULL,
+    config_json JSONB NOT NULL DEFAULT '{}'::jsonb,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_verified_at TIMESTAMPTZ
 );
 """
 
@@ -75,6 +86,7 @@ def init_db() -> None:
         cursor.execute("ALTER TABLE watch_targets ADD COLUMN IF NOT EXISTS source_version TEXT")
         cursor.execute("ALTER TABLE watch_targets ADD COLUMN IF NOT EXISTS resolved_search_url TEXT")
         cursor.execute("ALTER TABLE watch_targets ADD COLUMN IF NOT EXISTS normalized_filters_json JSONB")
+        cursor.execute("ALTER TABLE alert_events ADD COLUMN IF NOT EXISTS failure_reason TEXT")
 
 
 def add_watch(label: str, search_url: str) -> int:
@@ -148,10 +160,19 @@ def has_snapshot_history(watch_id: int) -> bool:
     with connect() as conn:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT EXISTS(SELECT 1 FROM listing_snapshots WHERE watch_target_id = %s)",
-            (watch_id,),
+            """
+            SELECT
+                last_checked_at IS NOT NULL
+                OR EXISTS(SELECT 1 FROM listing_snapshots WHERE watch_target_id = %s)
+            FROM watch_targets
+            WHERE id = %s
+            """,
+            (watch_id, watch_id),
         )
-        return bool(cursor.fetchone()[0])
+        row = cursor.fetchone()
+        if row is None:
+            return False
+        return bool(row[0])
 
 
 def existing_listing_ids(watch_id: int) -> set[str]:
@@ -266,4 +287,19 @@ def mark_alert_sent(watch_id: int, listing_id: str) -> None:
               AND event_type = 'new_listing'
             """,
             (watch_id, listing_id),
+        )
+
+
+def mark_alert_failed(watch_id: int, listing_id: str, reason: str) -> None:
+    with connect() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            UPDATE alert_events
+            SET status = 'failed', failure_reason = %s
+            WHERE watch_target_id = %s
+              AND external_listing_id = %s
+              AND event_type = 'new_listing'
+            """,
+            (reason[:1000], watch_id, listing_id),
         )
