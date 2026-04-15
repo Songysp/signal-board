@@ -240,8 +240,8 @@ So the MVP is fast and usable, but not fully canonical yet.
 Current live-listing finding:
 
 - Some map URLs return complex/cluster-level results while the mobile `articleList` endpoint returns `null`.
-- SignalBoard now detects that mismatch and stops instead of reporting a false `total=0`.
-- The remaining implementation gap is a safe, low-frequency path from complex/cluster results to article-level listings without bypassing Naver controls.
+- SignalBoard now falls back to `complexList` so these URLs produce complex-level search results instead of a false `total=0`.
+- The remaining implementation gap is a safe, low-frequency path from complex-level results to article-level listings without bypassing Naver controls.
 - Direct probing of the newer `front-api/v1` article paths returned `TOO_MANY_REQUESTS`, so further probing is paused until a successful browser Network request can be provided or a permitted data source is chosen.
 
 Browser-rendered scraping fallback status:
