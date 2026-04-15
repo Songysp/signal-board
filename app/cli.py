@@ -254,6 +254,7 @@ def preview_search(
     for listing in listings[:limit]:
         lines = [
             f"id={listing.listing_id}",
+            f"level={listing.result_level}",
             listing.title or listing.complex_name or "-",
             listing.trade_type or "-",
             listing.price_text or "-",

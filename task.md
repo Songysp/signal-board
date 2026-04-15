@@ -81,6 +81,22 @@
   - `python -m app.cli preview-search "https://new.land.naver.com/complexes?ms=37.385694,126.6477823,15&a=APT:ABYG:JGC&b=A1&e=RETAIL&f=40000&g=60000"` returns `total=20`
   - `pytest` regression tests
 
+### T024 Search Result Collector MVP
+- Status: `DONE`
+- Goal: 개별 매물이 아닌 검색 결과 단지/클러스터 기준으로 MVP 알림이 동작하게 만들기
+- Output:
+  - `NaverListing.result_level`
+  - complex fallback results saved as `result_level='complex'`
+  - DB schema columns for `result_level`
+  - Kakao message headline changed to `신규 검색 결과` for complex results
+  - management UI copy changed from individual listing wording to search-result wording
+  - legacy URL normalization keeps original zoom instead of increasing it
+- Verification:
+  - provided Songdo URL returns `total=20`
+  - DB watch poll returns `total=20`
+  - repeat poll returns `new=0`
+  - `pytest` passes
+
 ### T001 Project Separation
 - Status: `DONE`
 - Goal: SignalBoard를 독립 폴더/독립 repo로 분리
