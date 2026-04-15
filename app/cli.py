@@ -162,9 +162,21 @@ def list_watches_command() -> None:
     if not rows:
         typer.echo("no watches registered")
         return
-    for watch_id, label, search_url, source_version, resolved_search_url, is_active, created_at, last_checked_at in rows:
+    for (
+        watch_id,
+        label,
+        search_url,
+        source_version,
+        resolved_search_url,
+        is_active,
+        created_at,
+        last_checked_at,
+        current_result_count,
+        alert_event_count,
+    ) in rows:
         typer.echo(
             f"id={watch_id} active={is_active} source={source_version or '-'} label={label} "
+            f"results={current_result_count} alerts={alert_event_count} "
             f"created_at={created_at} last_checked_at={last_checked_at or '-'} "
             f"url={search_url} resolved={resolved_search_url or '-'}"
         )
