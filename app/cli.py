@@ -195,7 +195,7 @@ def poll_command() -> None:
         else:
             typer.echo(
                 f"id={result.watch_id} label={result.label} total={result.total_count} "
-                f"new={len(result.new_listings)}"
+                f"new={len(result.new_listings)} changed={len(result.changed_listings)}"
             )
 
 
@@ -259,6 +259,7 @@ def preview_search(
             listing.trade_type or "-",
             listing.price_text or "-",
             listing.area_text or "-",
+            f"count={listing.result_count}" if listing.result_count is not None else "count=-",
             listing.floor_text or "-",
             listing.detail_url or search_url,
         ]

@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS listing_snapshots (
     floor_text TEXT,
     complex_name TEXT,
     source_url TEXT,
+    result_count INTEGER,
     raw_json JSONB
 );
 
@@ -52,6 +53,7 @@ CREATE TABLE IF NOT EXISTS listing_current_state (
     floor_text TEXT,
     complex_name TEXT,
     source_url TEXT,
+    result_count INTEGER,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     PRIMARY KEY (watch_target_id, external_listing_id)
 );
@@ -91,6 +93,8 @@ def init_db() -> None:
         cursor.execute("ALTER TABLE alert_events ADD COLUMN IF NOT EXISTS failure_reason TEXT")
         cursor.execute("ALTER TABLE listing_snapshots ADD COLUMN IF NOT EXISTS result_level TEXT NOT NULL DEFAULT 'article'")
         cursor.execute("ALTER TABLE listing_current_state ADD COLUMN IF NOT EXISTS result_level TEXT NOT NULL DEFAULT 'article'")
+        cursor.execute("ALTER TABLE listing_snapshots ADD COLUMN IF NOT EXISTS result_count INTEGER")
+        cursor.execute("ALTER TABLE listing_current_state ADD COLUMN IF NOT EXISTS result_count INTEGER")
 
 
 def add_watch(label: str, search_url: str) -> int:
@@ -219,6 +223,43 @@ def existing_listing_ids(watch_id: int) -> set[str]:
         return {str(row[0]) for row in cursor.fetchall()}
 
 
+def get_current_listing_states(watch_id: int) -> dict[str, dict]:
+    with connect() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT
+                external_listing_id,
+                result_level,
+                title,
+                price_text,
+                trade_type,
+                area_text,
+                floor_text,
+                complex_name,
+                source_url,
+                result_count
+            FROM listing_current_state
+            WHERE watch_target_id = %s
+            """,
+            (watch_id,),
+        )
+        return {
+            str(row[0]): {
+                "result_level": row[1],
+                "title": row[2],
+                "price_text": row[3],
+                "trade_type": row[4],
+                "area_text": row[5],
+                "floor_text": row[6],
+                "complex_name": row[7],
+                "source_url": row[8],
+                "result_count": row[9],
+            }
+            for row in cursor.fetchall()
+        }
+
+
 def save_snapshot(watch_id: int, search_url: str, listings: list[NaverListing]) -> None:
     now = datetime.now(timezone.utc)
     with connect() as conn:
@@ -228,9 +269,9 @@ def save_snapshot(watch_id: int, search_url: str, listings: list[NaverListing]) 
                 """
                 INSERT INTO listing_snapshots (
                     watch_target_id, snapshot_at, external_listing_id, result_level, title, price_text,
-                    trade_type, area_text, floor_text, complex_name, source_url, raw_json
+                    trade_type, area_text, floor_text, complex_name, source_url, result_count, raw_json
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
                 """,
                 (
                     watch_id,
@@ -244,6 +285,7 @@ def save_snapshot(watch_id: int, search_url: str, listings: list[NaverListing]) 
                     listing.floor_text,
                     listing.complex_name,
                     listing.detail_url or search_url,
+                    listing.result_count,
                     json.dumps(listing.raw_payload or {}, ensure_ascii=False),
                 ),
             )
@@ -252,9 +294,9 @@ def save_snapshot(watch_id: int, search_url: str, listings: list[NaverListing]) 
                 INSERT INTO listing_current_state (
                     watch_target_id, external_listing_id, first_seen_at, last_seen_at,
                     last_snapshot_at, result_level, title, price_text, trade_type, area_text, floor_text,
-                    complex_name, source_url, is_active
+                    complex_name, source_url, result_count, is_active
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, TRUE)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, TRUE)
                 ON CONFLICT (watch_target_id, external_listing_id)
                 DO UPDATE SET
                     last_seen_at = EXCLUDED.last_seen_at,
@@ -267,6 +309,7 @@ def save_snapshot(watch_id: int, search_url: str, listings: list[NaverListing]) 
                     floor_text = EXCLUDED.floor_text,
                     complex_name = EXCLUDED.complex_name,
                     source_url = EXCLUDED.source_url,
+                    result_count = EXCLUDED.result_count,
                     is_active = TRUE
                 """,
                 (
@@ -283,6 +326,7 @@ def save_snapshot(watch_id: int, search_url: str, listings: list[NaverListing]) 
                     listing.floor_text,
                     listing.complex_name,
                     listing.detail_url or search_url,
+                    listing.result_count,
                 ),
             )
         cursor.execute(
@@ -291,24 +335,29 @@ def save_snapshot(watch_id: int, search_url: str, listings: list[NaverListing]) 
         )
 
 
-def create_alert_event(watch_id: int, listing: NaverListing, message: str) -> bool:
+def create_alert_event(
+    watch_id: int,
+    listing: NaverListing,
+    message: str,
+    event_type: str = "new_listing",
+) -> bool:
     with connect() as conn:
         cursor = conn.cursor()
         cursor.execute(
             """
             INSERT INTO alert_events (watch_target_id, external_listing_id, event_type, message)
-            VALUES (%s, %s, 'new_listing', %s)
+            VALUES (%s, %s, %s, %s)
             ON CONFLICT (watch_target_id, external_listing_id, event_type)
             DO NOTHING
             RETURNING id
             """,
-            (watch_id, listing.listing_id, message),
+            (watch_id, listing.listing_id, event_type, message),
         )
         row = cursor.fetchone()
         return row is not None
 
 
-def mark_alert_sent(watch_id: int, listing_id: str) -> None:
+def mark_alert_sent(watch_id: int, listing_id: str, event_type: str = "new_listing") -> None:
     with connect() as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -317,13 +366,18 @@ def mark_alert_sent(watch_id: int, listing_id: str) -> None:
             SET status = 'sent', sent_at = NOW()
             WHERE watch_target_id = %s
               AND external_listing_id = %s
-              AND event_type = 'new_listing'
+              AND event_type = %s
             """,
-            (watch_id, listing_id),
+            (watch_id, listing_id, event_type),
         )
 
 
-def mark_alert_failed(watch_id: int, listing_id: str, reason: str) -> None:
+def mark_alert_failed(
+    watch_id: int,
+    listing_id: str,
+    reason: str,
+    event_type: str = "new_listing",
+) -> None:
     with connect() as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -332,7 +386,7 @@ def mark_alert_failed(watch_id: int, listing_id: str, reason: str) -> None:
             SET status = 'failed', failure_reason = %s
             WHERE watch_target_id = %s
               AND external_listing_id = %s
-              AND event_type = 'new_listing'
+              AND event_type = %s
             """,
-            (reason[:1000], watch_id, listing_id),
+            (reason[:1000], watch_id, listing_id, event_type),
         )

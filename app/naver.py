@@ -125,6 +125,7 @@ class NaverSearchClient:
             floor_text=None,
             complex_name=str(complex_name) if complex_name is not None else None,
             detail_url=detail_url or search_url,
+            result_count=relevant_count,
             raw_payload=raw_payload,
         )
 
@@ -281,6 +282,7 @@ class NaverSearchClient:
             floor_text=str(floor_text) if floor_text is not None else None,
             complex_name=str(complex_name) if complex_name is not None else None,
             detail_url=detail_url,
+            result_count=None,
             raw_payload=item,
         )
 

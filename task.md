@@ -97,6 +97,22 @@
   - repeat poll returns `new=0`
   - `pytest` passes
 
+### T025 Complex Result Change Detection
+- Status: `DONE`
+- Goal: 검색 결과 단지/클러스터의 가격 범위, 면적 범위, 검색 결과 수 변화 감지
+- Output:
+  - `NaverListing.result_count`
+  - `listing_snapshots.result_count`
+  - `listing_current_state.result_count`
+  - current-state comparison for complex results
+  - `changed_result:{hash}` alert event type for deduped change notifications
+  - Kakao message format for `[부동산알리미] 검색 결과 변화`
+  - CLI poll output includes `changed=N`
+- Verification:
+  - `pytest` passes
+  - provided Songdo URL preview returns `total=20`
+  - DB watch id=3 fake-notifier poll produced `changed=20` once after schema upgrade, then repeat poll produced `changed=0`
+
 ### T001 Project Separation
 - Status: `DONE`
 - Goal: SignalBoard를 독립 폴더/독립 repo로 분리

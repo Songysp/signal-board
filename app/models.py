@@ -14,6 +14,7 @@ class NaverListing:
     floor_text: str | None = None
     complex_name: str | None = None
     detail_url: str | None = None
+    result_count: int | None = None
     raw_payload: dict | None = None
 
 
@@ -25,6 +26,7 @@ class PollResult:
     total_count: int
     baseline_created: bool
     new_listings: list[NaverListing]
+    changed_listings: list[NaverListing]
 
 
 @dataclass(slots=True)
