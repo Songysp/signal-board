@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS listing_snapshots (
     watch_target_id BIGINT NOT NULL REFERENCES watch_targets(id) ON DELETE CASCADE,
     snapshot_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     external_listing_id TEXT NOT NULL,
+    result_level TEXT NOT NULL DEFAULT 'article',
     title TEXT,
     price_text TEXT,
     trade_type TEXT,
@@ -43,6 +44,7 @@ CREATE TABLE IF NOT EXISTS listing_current_state (
     first_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     last_snapshot_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    result_level TEXT NOT NULL DEFAULT 'article',
     title TEXT,
     price_text TEXT,
     trade_type TEXT,
@@ -87,6 +89,8 @@ def init_db() -> None:
         cursor.execute("ALTER TABLE watch_targets ADD COLUMN IF NOT EXISTS resolved_search_url TEXT")
         cursor.execute("ALTER TABLE watch_targets ADD COLUMN IF NOT EXISTS normalized_filters_json JSONB")
         cursor.execute("ALTER TABLE alert_events ADD COLUMN IF NOT EXISTS failure_reason TEXT")
+        cursor.execute("ALTER TABLE listing_snapshots ADD COLUMN IF NOT EXISTS result_level TEXT NOT NULL DEFAULT 'article'")
+        cursor.execute("ALTER TABLE listing_current_state ADD COLUMN IF NOT EXISTS result_level TEXT NOT NULL DEFAULT 'article'")
 
 
 def add_watch(label: str, search_url: str) -> int:
@@ -223,15 +227,16 @@ def save_snapshot(watch_id: int, search_url: str, listings: list[NaverListing]) 
             cursor.execute(
                 """
                 INSERT INTO listing_snapshots (
-                    watch_target_id, snapshot_at, external_listing_id, title, price_text,
+                    watch_target_id, snapshot_at, external_listing_id, result_level, title, price_text,
                     trade_type, area_text, floor_text, complex_name, source_url, raw_json
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
                 """,
                 (
                     watch_id,
                     now,
                     listing.listing_id,
+                    listing.result_level,
                     listing.title,
                     listing.price_text,
                     listing.trade_type,
@@ -246,14 +251,15 @@ def save_snapshot(watch_id: int, search_url: str, listings: list[NaverListing]) 
                 """
                 INSERT INTO listing_current_state (
                     watch_target_id, external_listing_id, first_seen_at, last_seen_at,
-                    last_snapshot_at, title, price_text, trade_type, area_text, floor_text,
+                    last_snapshot_at, result_level, title, price_text, trade_type, area_text, floor_text,
                     complex_name, source_url, is_active
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, TRUE)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, TRUE)
                 ON CONFLICT (watch_target_id, external_listing_id)
                 DO UPDATE SET
                     last_seen_at = EXCLUDED.last_seen_at,
                     last_snapshot_at = EXCLUDED.last_snapshot_at,
+                    result_level = EXCLUDED.result_level,
                     title = EXCLUDED.title,
                     price_text = EXCLUDED.price_text,
                     trade_type = EXCLUDED.trade_type,
@@ -269,6 +275,7 @@ def save_snapshot(watch_id: int, search_url: str, listings: list[NaverListing]) 
                     now,
                     now,
                     now,
+                    listing.result_level,
                     listing.title,
                     listing.price_text,
                     listing.trade_type,

@@ -6,6 +6,7 @@ from dataclasses import dataclass
 @dataclass(slots=True)
 class NaverListing:
     listing_id: str
+    result_level: str = "article"
     title: str | None = None
     price_text: str | None = None
     trade_type: str | None = None

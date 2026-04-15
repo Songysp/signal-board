@@ -155,8 +155,8 @@ def render_dashboard() -> str:
   <main>
     <header>
       <div class="eyebrow">SignalBoard / 부동산알리미</div>
-      <h1>새 매물 신호를 놓치지 않는 운영 보드</h1>
-      <p class="lead">네이버부동산 저장 검색 URL을 등록하고, 수동 poll과 카카오 테스트를 한 화면에서 확인하는 MVP 관리 화면입니다.</p>
+      <h1>검색 결과 변화를 놓치지 않는 운영 보드</h1>
+      <p class="lead">네이버부동산 저장 검색 URL을 등록하고, 단지/클러스터 검색 결과 변화와 카카오 테스트를 한 화면에서 확인하는 MVP 관리 화면입니다.</p>
     </header>
 
     <section class="grid">
@@ -173,7 +173,7 @@ def render_dashboard() -> str:
 
       <article class="card">
         <h2>수동 실행</h2>
-        <p class="lead">첫 poll은 baseline만 저장하고, 두 번째부터 신규 매물만 알림으로 보냅니다.</p>
+        <p class="lead">첫 poll은 baseline만 저장하고, 두 번째부터 신규 검색 결과를 알림으로 보냅니다.</p>
         <button onclick="runPoll()">전체 poll</button>
         <button onclick="sendKakaoTest()">카카오 테스트</button>
         <button onclick="refreshAll()">새로고침</button>

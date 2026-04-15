@@ -117,6 +117,7 @@ class NaverSearchClient:
         title = f"{complex_name} 단지 결과" if complex_name else f"단지 {complex_no}"
         return NaverListing(
             listing_id=f"complex:{complex_no}",
+            result_level="complex",
             title=title,
             price_text=price_text,
             trade_type=trade_type,
@@ -272,6 +273,7 @@ class NaverSearchClient:
         detail_url = self._build_detail_url(search_url, item, str(listing_id))
         return NaverListing(
             listing_id=str(listing_id),
+            result_level="article",
             title=str(title) if title is not None else None,
             price_text=str(price_text) if price_text is not None else None,
             trade_type=str(trade_type) if trade_type is not None else None,
@@ -317,7 +319,7 @@ def build_legacy_search_url(filters: NaverSearchFilters) -> str:
         raise NaverFetchError("center coordinates are required to build a legacy URL.")
 
     query: dict[str, str] = {
-        "ms": f"{filters.center_lat},{filters.center_lon},{(filters.zoom or 15) + 1}",
+        "ms": f"{filters.center_lat},{filters.center_lon},{filters.zoom or 15}",
     }
 
     mapped_real_estate = _map_real_estate_types_to_legacy(filters.real_estate_types or [])

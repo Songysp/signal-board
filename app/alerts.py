@@ -15,11 +15,16 @@ from app.storage import (
 
 
 def format_listing_message(label: str, listing: NaverListing) -> str:
+    is_complex_result = listing.result_level == "complex"
+    headline = "[부동산알리미] 신규 검색 결과" if is_complex_result else "[부동산알리미] 신규 매물"
+    fallback_title = "검색 결과" if is_complex_result else f"매물 {listing.listing_id}"
     lines = [
-        f"[부동산알리미] 신규 매물",
+        headline,
         f"조건: {label}",
-        listing.title or listing.complex_name or f"매물 {listing.listing_id}",
+        listing.title or listing.complex_name or fallback_title,
     ]
+    if is_complex_result:
+        lines.append("유형: 단지/클러스터 검색 결과")
     if listing.price_text:
         lines.append(f"가격: {listing.price_text}")
     if listing.trade_type:

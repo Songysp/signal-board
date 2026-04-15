@@ -58,6 +58,7 @@ def test_fetch_listings_falls_back_to_complex_results_when_articles_are_empty() 
 
     assert len(listings) == 1
     assert listings[0].listing_id == "complex:123"
+    assert listings[0].result_level == "complex"
     assert listings[0].title == "테스트단지 단지 결과"
     assert listings[0].price_text == "매매 5억~6억"
     assert listings[0].area_text == "84.5~110.2㎡"
