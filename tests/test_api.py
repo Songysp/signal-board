@@ -37,7 +37,9 @@ def test_preview_search_endpoint_uses_configured_url(monkeypatch) -> None:
     assert "total" in response.json()
 
 
-def test_watches_endpoint_returns_list() -> None:
+def test_watches_endpoint_returns_list(monkeypatch) -> None:
+    monkeypatch.setattr(main, "list_watches", lambda: [])
+
     assert app is not None
     response = TestClient(app).get("/watches")
 
@@ -45,7 +47,9 @@ def test_watches_endpoint_returns_list() -> None:
     assert isinstance(response.json(), list)
 
 
-def test_alerts_endpoint_returns_list() -> None:
+def test_alerts_endpoint_returns_list(monkeypatch) -> None:
+    monkeypatch.setattr(main, "list_alert_events", lambda limit=50: [])
+
     assert app is not None
     response = TestClient(app).get("/alerts")
 

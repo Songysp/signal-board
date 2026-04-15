@@ -75,10 +75,10 @@
   - 일부 지도 URL은 단지/클러스터 결과를 반환하지만, 현재 사용하는 mobile `articleList` endpoint는 `null`을 반환함
 - Output:
   - `articleList`가 비어 있을 때 `complexList`를 확인
-  - 단지/클러스터 매물 카운트가 있으면 `total=0` 대신 명시 오류로 중단
+  - 단지/클러스터 매물 카운트가 있으면 단지 단위 결과로 fallback 수집
   - API 테스트가 실제 네이버 응답에 흔들리지 않도록 mock 기반으로 변경
 - Verification:
-  - `python -m app.cli preview-search` now stops with a clear mismatch error for the current URL
+  - `python -m app.cli preview-search "https://new.land.naver.com/complexes?ms=37.385694,126.6477823,15&a=APT:ABYG:JGC&b=A1&e=RETAIL&f=40000&g=60000"` returns `total=20`
   - `pytest` regression tests
 
 ### T001 Project Separation

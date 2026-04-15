@@ -41,15 +41,13 @@ class NaverSearchClient:
             raise NaverFetchError("Naver articleList returned non-JSON response.") from exc
 
         if payload is None:
-            self._raise_if_complex_results_exist(params)
-            return []
+            return self._fetch_complex_listings(params, search_url, filters)
         if not isinstance(payload, dict):
             raise NaverFetchError("Naver articleList returned an unexpected JSON shape.")
 
         body = payload.get("body")
         if body is None:
-            self._raise_if_complex_results_exist(params)
-            return []
+            return self._fetch_complex_listings(params, search_url, filters)
         if not isinstance(body, list):
             raise NaverFetchError("Naver articleList response did not include a listing body.")
 
@@ -64,45 +62,86 @@ class NaverSearchClient:
                 listings.append(listing)
         return listings
 
-    def _raise_if_complex_results_exist(self, params: dict[str, str]) -> None:
+    def _fetch_complex_listings(
+        self,
+        params: dict[str, str],
+        search_url: str,
+        filters: NaverSearchFilters,
+    ) -> list[NaverListing]:
         probe_params = {key: value for key, value in params.items() if not key.startswith("_")}
         try:
             response = self._get("https://m.land.naver.com/cluster/ajax/complexList", params=probe_params)
             payload = response.json()
         except (NaverFetchError, json.JSONDecodeError):
-            return
+            return []
         if not isinstance(payload, dict):
-            return
+            return []
 
         complexes = payload.get("result")
         if not isinstance(complexes, list):
-            return
+            return []
 
-        total_article_count = 0
-        sample_names: list[str] = []
+        listings: list[NaverListing] = []
+        seen: set[str] = set()
         for item in complexes:
             if not isinstance(item, dict):
                 continue
-            count = _to_int(str(item.get("totalAtclCnt") or "0")) or 0
-            count += _to_int(str(item.get("dealCnt") or "0")) or 0
-            count += _to_int(str(item.get("leaseCnt") or "0")) or 0
-            count += _to_int(str(item.get("rentCnt") or "0")) or 0
-            total_article_count += count
-            name = item.get("hscpNm")
-            if name and len(sample_names) < 3:
-                sample_names.append(str(name))
+            listing = self._normalize_complex_result(item, search_url, filters)
+            if listing and listing.listing_id not in seen:
+                seen.add(listing.listing_id)
+                listings.append(listing)
+        return listings
 
-        if total_article_count <= 0:
-            return
+    def _normalize_complex_result(
+        self,
+        item: dict,
+        search_url: str,
+        filters: NaverSearchFilters,
+    ) -> NaverListing | None:
+        complex_no = self._pick(item, "hscpNo", "complexNo")
+        if not complex_no:
+            return None
 
-        sample_text = f" 예: {', '.join(sample_names)}" if sample_names else ""
-        raise NaverFetchError(
-            (
-                "Naver returned complex-level results, but the article-level listing endpoint returned empty. "
-                "SignalBoard is stopping instead of reporting a false total=0."
-                f"{sample_text}"
-            )
+        relevant_count = _complex_relevant_count(item, filters.trade_types)
+        if relevant_count <= 0:
+            return None
+
+        complex_name = self._pick(item, "hscpNm", "complexName")
+        trade_type = _complex_trade_type_label(filters.trade_types)
+        price_text = _complex_price_text(item, filters.trade_types)
+        area_text = _complex_area_text(item)
+        detail_url = _build_fin_complex_url(str(complex_no), filters)
+        raw_payload = dict(item)
+        raw_payload["_signalboard_result_level"] = "complex"
+
+        title = f"{complex_name} 단지 결과" if complex_name else f"단지 {complex_no}"
+        return NaverListing(
+            listing_id=f"complex:{complex_no}",
+            title=title,
+            price_text=price_text,
+            trade_type=trade_type,
+            area_text=area_text,
+            floor_text=None,
+            complex_name=str(complex_name) if complex_name is not None else None,
+            detail_url=detail_url or search_url,
+            raw_payload=raw_payload,
         )
+
+    def _raise_if_complex_results_exist(self, params: dict[str, str]) -> None:
+        complex_listings = self._fetch_complex_listings(
+            params,
+            "",
+            NaverSearchFilters(source_url="", source_version="unknown"),
+        )
+        if complex_listings:
+            sample_text = ", ".join(listing.complex_name or listing.title or listing.listing_id for listing in complex_listings[:3])
+            raise NaverFetchError(
+                (
+                    "Naver returned complex-level results, but the article-level listing endpoint returned empty. "
+                    "SignalBoard is stopping instead of reporting a false total=0."
+                    f" 예: {sample_text}"
+                )
+            )
 
     def _build_mobile_article_params(self, filters: NaverSearchFilters) -> dict[str, str]:
         if filters.center_lat is None or filters.center_lon is None:
@@ -552,6 +591,92 @@ def _build_legacy_query_params(filters: NaverSearchFilters) -> dict[str, str]:
     if filters.move_in_types and set(filters.move_in_types) == {"MVF01", "MVF02"}:
         params["e"] = "RETAIL"
     return params
+
+
+def _complex_relevant_count(item: dict, trade_types: list[str] | None) -> int:
+    trade_types = trade_types or ["A1"]
+    total = 0
+    if "A1" in trade_types:
+        total += _to_int(str(item.get("dealCnt") or "0")) or 0
+    if "B1" in trade_types:
+        total += _to_int(str(item.get("leaseCnt") or "0")) or 0
+    if "B2" in trade_types:
+        total += _to_int(str(item.get("rentCnt") or "0")) or 0
+    if "B3" in trade_types:
+        total += _to_int(str(item.get("strmRentCnt") or "0")) or 0
+    if total:
+        return total
+    return _to_int(str(item.get("totalAtclCnt") or "0")) or 0
+
+
+def _complex_trade_type_label(trade_types: list[str] | None) -> str | None:
+    labels = {
+        "A1": "매매",
+        "B1": "전세",
+        "B2": "월세",
+        "B3": "단기임대",
+    }
+    if not trade_types:
+        return None
+    return ", ".join(labels.get(value, value) for value in trade_types)
+
+
+def _complex_price_text(item: dict, trade_types: list[str] | None) -> str | None:
+    trade_types = trade_types or ["A1"]
+    ranges: list[str] = []
+    specs = [
+        ("A1", "매매", "dealPrcMin", "dealPrcMax"),
+        ("B1", "전세", "leasePrcMin", "leasePrcMax"),
+        ("B2", "월세", "rentPrcMin", "rentPrcMax"),
+        ("B3", "단기", "strmRentPrcMin", "strmRentPrcMax"),
+    ]
+    for code, label, min_key, max_key in specs:
+        if code not in trade_types:
+            continue
+        minimum = _clean_html_text(item.get(min_key))
+        maximum = _clean_html_text(item.get(max_key))
+        if minimum and maximum and minimum != maximum:
+            ranges.append(f"{label} {minimum}~{maximum}")
+        elif minimum:
+            ranges.append(f"{label} {minimum}")
+        elif maximum:
+            ranges.append(f"{label} {maximum}")
+    return " / ".join(ranges) if ranges else None
+
+
+def _complex_area_text(item: dict) -> str | None:
+    minimum = item.get("minSpc")
+    maximum = item.get("maxSpc")
+    if minimum and maximum and str(minimum) != str(maximum):
+        return f"{minimum}~{maximum}㎡"
+    if minimum:
+        return f"{minimum}㎡"
+    if maximum:
+        return f"{maximum}㎡"
+    return None
+
+
+def _build_fin_complex_url(complex_no: str, filters: NaverSearchFilters) -> str:
+    params: dict[str, str] = {}
+    if filters.trade_types:
+        params["articleTradeTypes"] = ",".join(filters.trade_types)
+        params["transactionTradeType"] = filters.trade_types[0]
+    if filters.space:
+        if filters.space.minimum:
+            params["supplySpaceMin"] = filters.space.minimum
+        if filters.space.maximum:
+            params["supplySpaceMax"] = filters.space.maximum
+    query = urlencode(params)
+    suffix = f"?{query}" if query else ""
+    return f"https://fin.land.naver.com/complexes/{complex_no}{suffix}"
+
+
+def _clean_html_text(value: object | None) -> str | None:
+    if value in (None, ""):
+        return None
+    text = re.sub(r"<[^>]+>", "", str(value))
+    text = re.sub(r"\s+", " ", text).strip()
+    return text or None
 
 
 def _compute_bounds(lat: float, lon: float, zoom: int, width: int = 390, height: int = 844) -> dict[str, float]:
