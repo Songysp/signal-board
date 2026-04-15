@@ -113,6 +113,18 @@
   - provided Songdo URL preview returns `total=20`
   - DB watch id=3 fake-notifier poll produced `changed=20` once after schema upgrade, then repeat poll produced `changed=0`
 
+### T026 Alert Event UI
+- Status: `DONE`
+- Goal: 관리화면에서 신규 검색 결과와 검색 결과 변화 이벤트를 구분해서 읽기 쉽게 표시
+- Output:
+  - recent alerts rendered as cards instead of raw JSON
+  - event type badges for `신규 검색 결과` and `검색 결과 변화`
+  - status badges for sent/pending/failed
+  - alert message rendered with line breaks
+- Verification:
+  - dashboard HTML test checks `검색 결과 변화` UI copy
+  - `pytest` passes
+
 ### T001 Project Separation
 - Status: `DONE`
 - Goal: SignalBoard를 독립 폴더/독립 repo로 분리

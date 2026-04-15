@@ -21,6 +21,8 @@ def test_dashboard_endpoint_returns_html() -> None:
     assert response.status_code == 200
     assert "SignalBoard" in response.text
     assert "감시 URL 등록" in response.text
+    assert "검색 결과 변화" in response.text
+    assert "renderAlerts" in response.text
 
 
 def test_preview_search_endpoint_uses_configured_url(monkeypatch) -> None:

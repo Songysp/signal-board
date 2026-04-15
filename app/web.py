@@ -137,6 +137,52 @@ def render_dashboard() -> str:
       white-space: pre-wrap;
     }
 
+    .event-list {
+      display: grid;
+      gap: 12px;
+      background: transparent;
+      color: var(--ink);
+      padding: 0;
+      overflow: visible;
+    }
+
+    .event-card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--paper);
+      padding: 14px;
+    }
+
+    .event-meta {
+      align-items: center;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .badge {
+      border-radius: 999px;
+      display: inline-flex;
+      font: 800 12px/1 "Malgun Gothic", sans-serif;
+      padding: 7px 10px;
+    }
+
+    .badge-new { background: #dff4e7; color: #125c3d; }
+    .badge-change { background: #fff1d6; color: #87500f; }
+    .badge-status { background: #e7ece8; color: #4d5b51; }
+    .badge-failed { background: #ffe0dc; color: #9d281c; }
+
+    .event-title {
+      font: 800 14px/1.4 "Malgun Gothic", sans-serif;
+    }
+
+    .event-message {
+      color: #233026;
+      font: 500 13px/1.6 "Malgun Gothic", sans-serif;
+      white-space: pre-wrap;
+    }
+
     .status {
       color: var(--warn);
       font: 700 13px/1.5 "Malgun Gothic", sans-serif;
@@ -187,7 +233,7 @@ def render_dashboard() -> str:
 
       <article class="card wide">
         <h2>최근 알림</h2>
-        <div class="list" id="alerts">loading...</div>
+        <div class="event-list" id="alerts">loading...</div>
       </article>
 
       <article class="card wide">
@@ -219,6 +265,44 @@ def render_dashboard() -> str:
       $(id).textContent = typeof value === "string" ? value : JSON.stringify(value, null, 2);
     }
 
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function eventTypeLabel(eventType) {
+      return eventType && eventType.startsWith("changed_result") ? "검색 결과 변화" : "신규 검색 결과";
+    }
+
+    function eventTypeClass(eventType) {
+      return eventType && eventType.startsWith("changed_result") ? "badge-change" : "badge-new";
+    }
+
+    function statusClass(status) {
+      return status === "failed" ? "badge-failed" : "badge-status";
+    }
+
+    function renderAlerts(alerts) {
+      if (!alerts.length) {
+        $("alerts").innerHTML = '<div class="event-card">아직 알림 이벤트가 없습니다.</div>';
+        return;
+      }
+      $("alerts").innerHTML = alerts.map((event) => `
+        <article class="event-card">
+          <div class="event-meta">
+            <span class="badge ${eventTypeClass(event.event_type)}">${eventTypeLabel(event.event_type)}</span>
+            <span class="badge ${statusClass(event.status)}">${escapeHtml(event.status)}</span>
+            <span class="event-title">${escapeHtml(event.watch_label)} · ${escapeHtml(event.external_listing_id)}</span>
+          </div>
+          <div class="event-message">${escapeHtml(event.message || event.failure_reason || "(message missing)")}</div>
+        </article>
+      `).join("");
+    }
+
     async function refreshAll() {
       try {
         const [watches, alerts] = await Promise.all([
@@ -226,7 +310,7 @@ def render_dashboard() -> str:
           api("/alerts?limit=20")
         ]);
         show("watches", watches);
-        show("alerts", alerts);
+        renderAlerts(alerts);
       } catch (error) {
         show("output", error.message);
       }
