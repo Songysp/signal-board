@@ -125,6 +125,21 @@
   - dashboard HTML test checks `검색 결과 변화` UI copy
   - `pytest` passes
 
+### T027 Watch Management Controls
+- Status: `DONE`
+- Goal: 오래된 테스트 watch를 SQL 없이 관리화면에서 활성/비활성 처리
+- Output:
+  - `set_watch_active()` storage function
+  - `PATCH /watches/{watch_id}/active`
+  - watch cards in management UI
+  - active/inactive badges
+  - activate/deactivate buttons
+- Verification:
+  - API tests for success and 404 paths
+  - dashboard HTML test checks `setWatchActive`
+  - DB smoke test toggled one watch off and restored original state
+  - `pytest` passes
+
 ### T001 Project Separation
 - Status: `DONE`
 - Goal: SignalBoard를 독립 폴더/독립 repo로 분리

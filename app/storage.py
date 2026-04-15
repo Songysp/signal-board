@@ -150,6 +150,21 @@ def list_watches() -> list[tuple]:
         return list(cursor.fetchall())
 
 
+def set_watch_active(watch_id: int, is_active: bool) -> bool:
+    with connect() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            UPDATE watch_targets
+            SET is_active = %s
+            WHERE id = %s
+            RETURNING id
+            """,
+            (is_active, watch_id),
+        )
+        return cursor.fetchone() is not None
+
+
 def list_alert_events(limit: int = 50) -> list[tuple]:
     with connect() as conn:
         cursor = conn.cursor()
