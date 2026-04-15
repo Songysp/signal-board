@@ -137,7 +137,8 @@ def render_dashboard() -> str:
       white-space: pre-wrap;
     }
 
-    .event-list {
+    .event-list,
+    .watch-list {
       display: grid;
       gap: 12px;
       background: transparent;
@@ -146,14 +147,16 @@ def render_dashboard() -> str:
       overflow: visible;
     }
 
-    .event-card {
+    .event-card,
+    .watch-card {
       border: 1px solid var(--line);
       border-radius: 18px;
       background: var(--paper);
       padding: 14px;
     }
 
-    .event-meta {
+    .event-meta,
+    .watch-meta {
       align-items: center;
       display: flex;
       flex-wrap: wrap;
@@ -172,15 +175,23 @@ def render_dashboard() -> str:
     .badge-change { background: #fff1d6; color: #87500f; }
     .badge-status { background: #e7ece8; color: #4d5b51; }
     .badge-failed { background: #ffe0dc; color: #9d281c; }
+    .badge-active { background: #dff4e7; color: #125c3d; }
+    .badge-inactive { background: #eeeeea; color: #6b6b61; }
 
-    .event-title {
+    .event-title,
+    .watch-title {
       font: 800 14px/1.4 "Malgun Gothic", sans-serif;
     }
 
-    .event-message {
+    .event-message,
+    .watch-url {
       color: #233026;
       font: 500 13px/1.6 "Malgun Gothic", sans-serif;
       white-space: pre-wrap;
+    }
+
+    .watch-actions {
+      margin-top: 10px;
     }
 
     .status {
@@ -228,7 +239,7 @@ def render_dashboard() -> str:
 
       <article class="card wide">
         <h2>감시 목록</h2>
-        <div class="list" id="watches">loading...</div>
+        <div class="watch-list" id="watches">loading...</div>
       </article>
 
       <article class="card wide">
@@ -303,13 +314,48 @@ def render_dashboard() -> str:
       `).join("");
     }
 
+    function renderWatches(watches) {
+      if (!watches.length) {
+        $("watches").innerHTML = '<div class="watch-card">등록된 감시 URL이 없습니다.</div>';
+        return;
+      }
+      $("watches").innerHTML = watches.map((watch) => `
+        <article class="watch-card">
+          <div class="watch-meta">
+            <span class="badge ${watch.is_active ? "badge-active" : "badge-inactive"}">${watch.is_active ? "활성" : "비활성"}</span>
+            <span class="watch-title">#${escapeHtml(watch.id)} ${escapeHtml(watch.label)}</span>
+          </div>
+          <div class="watch-url">${escapeHtml(watch.search_url)}</div>
+          <div class="watch-actions">
+            <button onclick="setWatchActive(${watch.id}, ${watch.is_active ? "false" : "true"})">
+              ${watch.is_active ? "비활성화" : "활성화"}
+            </button>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    async function setWatchActive(watchId, isActive) {
+      $("actionStatus").textContent = "감시 상태 변경 중...";
+      try {
+        const result = await api(`/watches/${watchId}/active`, {
+          method: "PATCH",
+          body: JSON.stringify({ is_active: isActive })
+        });
+        $("actionStatus").textContent = `watch #${result.id} ${result.is_active ? "활성화" : "비활성화"} 완료`;
+        await refreshAll();
+      } catch (error) {
+        $("actionStatus").textContent = error.message;
+      }
+    }
+
     async function refreshAll() {
       try {
         const [watches, alerts] = await Promise.all([
           api("/watches"),
           api("/alerts?limit=20")
         ]);
-        show("watches", watches);
+        renderWatches(watches);
         renderAlerts(alerts);
       } catch (error) {
         show("output", error.message);

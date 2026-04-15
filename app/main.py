@@ -8,7 +8,7 @@ from app.config import settings
 from app.kakao_notifier import KakaoMessageError, KakaoNotifier
 from app.kakao_tokens import KakaoTokenManager
 from app.naver import NaverFetchError, NaverSearchClient
-from app.storage import add_watch, list_alert_events, list_watches
+from app.storage import add_watch, list_alert_events, list_watches, set_watch_active
 from app.web import render_dashboard
 
 try:
@@ -32,6 +32,10 @@ class PreviewRequest(BaseModel):
 
 class KakaoTestRequest(BaseModel):
     message: str = "[부동산알리미] SignalBoard API 알림 테스트\n카카오 나에게 메시지 연결이 정상입니다."
+
+
+class WatchActiveUpdate(BaseModel):
+    is_active: bool
 
 
 def health() -> dict[str, str]:
@@ -82,6 +86,16 @@ def create_app() -> Any:
         except Exception as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         return {"id": watch_id}
+
+    @api.patch("/watches/{watch_id}/active")
+    def update_watch_active(watch_id: int, payload: WatchActiveUpdate) -> dict[str, object]:
+        try:
+            updated = set_watch_active(watch_id, payload.is_active)
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="PostgreSQL connection failed") from exc
+        if not updated:
+            raise HTTPException(status_code=404, detail="watch not found")
+        return {"id": watch_id, "is_active": payload.is_active}
 
     @api.post("/poll")
     def poll() -> list[dict]:

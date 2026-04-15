@@ -59,6 +59,7 @@ Implemented now:
 13. Minimal FastAPI surface is available for watches, polling, alerts, preview, and Kakao test sends.
 14. A thin web management UI is served from `GET /`.
 15. The management UI renders alert events as readable cards with event/status badges.
+16. Watch targets can be activated/deactivated through the API and management UI.
 
 Not implemented yet:
 
