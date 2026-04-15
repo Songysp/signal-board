@@ -92,3 +92,9 @@ DB 없이 단일 URL만 빠르게 테스트:
 ```powershell
 .\.venv\bin\python.exe -m app.cli poll-url --no-send-kakao
 ```
+
+읽기 전용 상태 점검:
+
+```powershell
+.\.venv\bin\python.exe -m app.cli doctor
+```

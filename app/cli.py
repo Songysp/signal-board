@@ -137,6 +137,74 @@ def db_check_command() -> None:
     typer.echo("database connection ok")
 
 
+@app.command("doctor")
+def doctor_command(
+    check_kakao: bool = typer.Option(True, "--check-kakao/--no-check-kakao", help="Verify Kakao profile token"),
+    check_naver: bool = typer.Option(True, "--check-naver/--no-check-naver", help="Preview configured Naver URL"),
+) -> None:
+    """Run a read-only health check for local MVP operations."""
+    ok_count = 0
+    warn_count = 0
+    fail_count = 0
+
+    def report(status: str, label: str, detail: str) -> None:
+        nonlocal ok_count, warn_count, fail_count
+        if status == "OK":
+            ok_count += 1
+            color = typer.colors.GREEN
+        elif status == "WARN":
+            warn_count += 1
+            color = typer.colors.YELLOW
+        else:
+            fail_count += 1
+            color = typer.colors.RED
+        typer.secho(f"{status:<5} {label}: {detail}", fg=color)
+
+    report("OK", "app", settings.app_name)
+    report("OK" if settings.database_url else "FAIL", "DATABASE_URL", "set" if settings.database_url else "missing")
+    report("OK" if settings.kakao_rest_api_key else "WARN", "KAKAO_REST_API_KEY", mask_secret(settings.kakao_rest_api_key))
+    report("OK" if settings.kakao_access_token else "WARN", "KAKAO_ACCESS_TOKEN", mask_secret(settings.kakao_access_token))
+    report("OK" if settings.naver_search_url else "WARN", "NAVER_SEARCH_URL", "set" if settings.naver_search_url else "missing")
+
+    try:
+        with connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+        rows = list_watches()
+        active_count = sum(1 for row in rows if row[5])
+        report("OK", "postgres", f"connected; watches={len(rows)} active={active_count}")
+    except Exception as exc:
+        report("FAIL", "postgres", str(exc))
+
+    if check_kakao:
+        try:
+            profile = _build_notifier().get_profile()
+            report("OK", "kakao", f"profile id={profile.get('id')}")
+        except Exception as exc:
+            report("WARN", "kakao", str(exc))
+
+    if check_naver:
+        if not settings.naver_search_url:
+            report("WARN", "naver", "NAVER_SEARCH_URL is missing")
+        else:
+            try:
+                listings = NaverSearchClient().fetch_listings(settings.naver_search_url)
+                level_counts: dict[str, int] = {}
+                for listing in listings:
+                    level_counts[listing.result_level] = level_counts.get(listing.result_level, 0) + 1
+                report("OK", "naver", f"preview total={len(listings)} levels={level_counts}")
+            except NaverFetchError as exc:
+                report("WARN", "naver", _format_naver_error(exc))
+            except Exception as exc:
+                report("WARN", "naver", str(exc))
+
+    summary_status = "OK" if fail_count == 0 else "FAIL"
+    typer.echo(f"summary: {summary_status} ok={ok_count} warn={warn_count} fail={fail_count}")
+    if fail_count:
+        raise typer.Exit(1)
+
+
 @app.command("add-watch")
 def add_watch_command(
     label: str = typer.Argument(..., help="Human label for the saved search"),

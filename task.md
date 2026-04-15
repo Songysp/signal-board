@@ -154,6 +154,20 @@
   - CLI smoke test shows watch summaries
   - `pytest` passes
 
+### T029 App Doctor Command
+- Status: `DONE`
+- Goal: 운영 전 로컬 상태를 읽기 전용으로 한 번에 점검
+- Output:
+  - `doctor` CLI command
+  - env presence checks for DB, Kakao, Naver URL
+  - PostgreSQL connectivity and watch counts
+  - optional Kakao profile check
+  - optional Naver preview check with result-level summary
+- Verification:
+  - `doctor --no-check-kakao --no-check-naver`
+  - `doctor`
+  - `pytest` passes
+
 ### T001 Project Separation
 - Status: `DONE`
 - Goal: SignalBoard를 독립 폴더/독립 repo로 분리

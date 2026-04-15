@@ -61,6 +61,7 @@ Implemented now:
 15. The management UI renders alert events as readable cards with event/status badges.
 16. Watch targets can be activated/deactivated through the API and management UI.
 17. Watch summaries include current known result count and alert event count.
+18. `doctor` provides a read-only local health check for env, DB, Kakao profile, and Naver preview.
 
 Not implemented yet:
 
