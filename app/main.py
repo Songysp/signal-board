@@ -75,6 +75,8 @@ def create_app() -> Any:
                 "is_active": row[5],
                 "created_at": row[6],
                 "last_checked_at": row[7],
+                "current_result_count": row[8],
+                "alert_event_count": row[9],
             }
             for row in rows
         ]

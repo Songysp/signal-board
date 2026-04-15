@@ -24,6 +24,7 @@ def test_dashboard_endpoint_returns_html() -> None:
     assert "검색 결과 변화" in response.text
     assert "renderAlerts" in response.text
     assert "setWatchActive" in response.text
+    assert "현재 결과" in response.text
 
 
 def test_preview_search_endpoint_uses_configured_url(monkeypatch) -> None:
@@ -41,13 +42,32 @@ def test_preview_search_endpoint_uses_configured_url(monkeypatch) -> None:
 
 
 def test_watches_endpoint_returns_list(monkeypatch) -> None:
-    monkeypatch.setattr(main, "list_watches", lambda: [])
+    monkeypatch.setattr(
+        main,
+        "list_watches",
+        lambda: [
+            (
+                7,
+                "테스트",
+                "https://new.land.naver.com/",
+                "new.land.legacy",
+                "https://new.land.naver.com/",
+                True,
+                "created",
+                "checked",
+                20,
+                3,
+            )
+        ],
+    )
 
     assert app is not None
     response = TestClient(app).get("/watches")
 
     assert response.status_code == 200
     assert isinstance(response.json(), list)
+    assert response.json()[0]["current_result_count"] == 20
+    assert response.json()[0]["alert_event_count"] == 3
 
 
 def test_update_watch_active_endpoint(monkeypatch) -> None:

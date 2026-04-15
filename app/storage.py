@@ -135,16 +135,21 @@ def list_watches() -> list[tuple]:
         cursor.execute(
             """
             SELECT
-                id,
-                label,
-                search_url,
-                source_version,
-                resolved_search_url,
-                is_active,
-                created_at,
-                last_checked_at
-            FROM watch_targets
-            ORDER BY id
+                w.id,
+                w.label,
+                w.search_url,
+                w.source_version,
+                w.resolved_search_url,
+                w.is_active,
+                w.created_at,
+                w.last_checked_at,
+                COUNT(DISTINCT s.external_listing_id) AS current_result_count,
+                COUNT(DISTINCT e.id) AS alert_event_count
+            FROM watch_targets w
+            LEFT JOIN listing_current_state s ON s.watch_target_id = w.id AND s.is_active = TRUE
+            LEFT JOIN alert_events e ON e.watch_target_id = w.id
+            GROUP BY w.id
+            ORDER BY w.id
             """
         )
         return list(cursor.fetchall())

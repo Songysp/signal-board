@@ -194,6 +194,13 @@ def render_dashboard() -> str:
       margin-top: 10px;
     }
 
+    .watch-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 10px 0;
+    }
+
     .status {
       color: var(--warn);
       font: 700 13px/1.5 "Malgun Gothic", sans-serif;
@@ -324,6 +331,11 @@ def render_dashboard() -> str:
           <div class="watch-meta">
             <span class="badge ${watch.is_active ? "badge-active" : "badge-inactive"}">${watch.is_active ? "활성" : "비활성"}</span>
             <span class="watch-title">#${escapeHtml(watch.id)} ${escapeHtml(watch.label)}</span>
+          </div>
+          <div class="watch-stats">
+            <span class="badge badge-status">현재 결과 ${escapeHtml(watch.current_result_count ?? 0)}</span>
+            <span class="badge badge-status">알림 ${escapeHtml(watch.alert_event_count ?? 0)}</span>
+            <span class="badge badge-status">마지막 수집 ${escapeHtml(watch.last_checked_at || "-")}</span>
           </div>
           <div class="watch-url">${escapeHtml(watch.search_url)}</div>
           <div class="watch-actions">

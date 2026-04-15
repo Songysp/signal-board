@@ -140,6 +140,20 @@
   - DB smoke test toggled one watch off and restored original state
   - `pytest` passes
 
+### T028 Watch Status Summary
+- Status: `DONE`
+- Goal: 관리화면과 CLI에서 각 watch의 현재 상태를 빠르게 파악
+- Output:
+  - `list_watches()` includes current known result count
+  - `list_watches()` includes alert event count
+  - `GET /watches` exposes `current_result_count` and `alert_event_count`
+  - management UI watch cards display current results, alert count, and last checked time
+  - CLI `list-watches` shows `results=N alerts=N`
+- Verification:
+  - API test checks summary fields
+  - CLI smoke test shows watch summaries
+  - `pytest` passes
+
 ### T001 Project Separation
 - Status: `DONE`
 - Goal: SignalBoard를 독립 폴더/독립 repo로 분리
