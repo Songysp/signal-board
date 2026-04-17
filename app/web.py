@@ -413,6 +413,11 @@ def render_dashboard() -> str:
       `).join("");
     }
 
+    function renderPreviewResults(result) {
+      renderResults(result.listings || []);
+      show("output", { total: result.total, preview_count: (result.listings || []).length });
+    }
+
     async function loadWatchResults(watchId) {
       $("actionStatus").textContent = `watch #${watchId} 현재 결과 조회 중...`;
       try {
@@ -460,7 +465,7 @@ def render_dashboard() -> str:
           body: JSON.stringify({ search_url: $("searchUrl").value || null, limit: 5 })
         });
         $("formStatus").textContent = `미리보기 완료: total=${result.total}`;
-        show("output", result);
+        renderPreviewResults(result);
       } catch (error) {
         $("formStatus").textContent = error.message;
       }

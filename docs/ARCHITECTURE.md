@@ -67,6 +67,7 @@ Implemented now:
 21. Current known search results can be viewed per watch through the API and management UI.
 22. `cleanup-retention` provides dry-run/apply cleanup for old alert events and local logs.
 23. Individual watch targets can be polled from CLI, API, and the management UI to reduce unnecessary requests.
+24. Search previews render as result cards in the management UI.
 
 Not implemented yet:
 
