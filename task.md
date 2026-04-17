@@ -273,6 +273,20 @@
   - dashboard HTML test checks filter functions
   - `pytest` passes
 
+### T038 Manual QA Pass
+- Status: `DONE`
+- Goal: 관리화면이 실제 로컬 서버와 브라우저 DOM에서 핵심 요소를 렌더링하는지 확인
+- Output:
+  - `docs/QA_MANUAL.md`
+- Verification:
+  - local `GET /health`
+  - local dashboard HTTP 200
+  - Chrome headless DOM smoke
+  - watch cards rendered
+  - alert cards rendered
+  - result filter controls rendered
+  - single-watch poll buttons rendered
+
 ### T001 Project Separation
 - Status: `DONE`
 - Goal: SignalBoard를 독립 폴더/독립 repo로 분리
