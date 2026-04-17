@@ -164,6 +164,11 @@ def doctor_command(
     report("OK" if settings.database_url else "FAIL", "DATABASE_URL", "set" if settings.database_url else "missing")
     report("OK" if settings.kakao_rest_api_key else "WARN", "KAKAO_REST_API_KEY", mask_secret(settings.kakao_rest_api_key))
     report("OK" if settings.kakao_access_token else "WARN", "KAKAO_ACCESS_TOKEN", mask_secret(settings.kakao_access_token))
+    report(
+        "OK" if settings.kakao_refresh_token else "WARN",
+        "KAKAO_REFRESH_TOKEN",
+        mask_secret(settings.kakao_refresh_token) if settings.kakao_refresh_token else "missing; run kakao-login for long-running polling",
+    )
     report("OK" if settings.naver_search_url else "WARN", "NAVER_SEARCH_URL", "set" if settings.naver_search_url else "missing")
 
     try:
