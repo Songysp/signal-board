@@ -16,6 +16,22 @@ docker compose up -d postgres
 .\.venv\bin\python.exe -m app.cli doctor
 ```
 
+## Kakao Token Longevity
+
+Long-running polling works best with a refresh token.
+
+If `doctor` reports `KAKAO_REFRESH_TOKEN` as missing, run:
+
+```powershell
+.\.venv\bin\python.exe -m app.cli kakao-login
+```
+
+Refresh manually when needed:
+
+```powershell
+.\.venv\bin\python.exe -m app.cli kakao-refresh
+```
+
 ## Run One Poll Manually
 
 This command checks local readiness without sending a Kakao test message, then runs one DB-backed poll.

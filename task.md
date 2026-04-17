@@ -200,6 +200,17 @@
   - dashboard HTML test checks token UI
   - `pytest` passes
 
+### T032 Kakao Token Longevity Warning
+- Status: `DONE`
+- Goal: 장시간 polling 중 access token 만료 리스크를 doctor/runbook에서 드러내기
+- Output:
+  - `doctor` warns when `KAKAO_REFRESH_TOKEN` is missing
+  - README note for refresh token
+  - RUNBOOK Kakao token longevity section
+- Verification:
+  - `doctor --no-check-kakao --no-check-naver` shows refresh-token warning
+  - `pytest` passes
+
 ### T001 Project Separation
 - Status: `DONE`
 - Goal: SignalBoard를 독립 폴더/독립 repo로 분리
