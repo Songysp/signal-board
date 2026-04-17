@@ -25,6 +25,7 @@ def test_dashboard_endpoint_returns_html() -> None:
     assert "renderAlerts" in response.text
     assert "setWatchActive" in response.text
     assert "현재 결과" in response.text
+    assert "loadWatchResults" in response.text
     assert "관리 토큰" in response.text
 
 
@@ -133,3 +134,34 @@ def test_alerts_endpoint_returns_list(monkeypatch) -> None:
 
     assert response.status_code == 200
     assert isinstance(response.json(), list)
+
+
+def test_watch_results_endpoint_returns_list(monkeypatch) -> None:
+    monkeypatch.setattr(
+        main,
+        "list_current_results",
+        lambda watch_id, limit=100: [
+            (
+                "complex:123",
+                "complex",
+                "테스트단지 단지 결과",
+                "매매 5억~6억",
+                "매매",
+                "84~110㎡",
+                None,
+                "테스트단지",
+                "https://fin.land.naver.com/complexes/123",
+                3,
+                "first",
+                "last",
+                "snapshot",
+            )
+        ],
+    )
+
+    assert app is not None
+    response = TestClient(app).get("/watches/7/results")
+
+    assert response.status_code == 200
+    assert response.json()[0]["external_listing_id"] == "complex:123"
+    assert response.json()[0]["result_count"] == 3

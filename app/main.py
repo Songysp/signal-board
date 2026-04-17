@@ -8,7 +8,7 @@ from app.config import settings
 from app.kakao_notifier import KakaoMessageError, KakaoNotifier
 from app.kakao_tokens import KakaoTokenManager
 from app.naver import NaverFetchError, NaverSearchClient
-from app.storage import add_watch, list_alert_events, list_watches, set_watch_active
+from app.storage import add_watch, list_alert_events, list_current_results, list_watches, set_watch_active
 from app.web import render_dashboard
 
 try:
@@ -131,6 +131,31 @@ def create_app() -> Any:
                 "failure_reason": row[7],
                 "created_at": row[8],
                 "sent_at": row[9],
+            }
+            for row in rows
+        ]
+
+    @api.get("/watches/{watch_id}/results")
+    def get_watch_results(watch_id: int, limit: int = 100) -> list[dict]:
+        try:
+            rows = list_current_results(watch_id, limit=max(1, min(limit, 200)))
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="PostgreSQL connection failed") from exc
+        return [
+            {
+                "external_listing_id": row[0],
+                "result_level": row[1],
+                "title": row[2],
+                "price_text": row[3],
+                "trade_type": row[4],
+                "area_text": row[5],
+                "floor_text": row[6],
+                "complex_name": row[7],
+                "source_url": row[8],
+                "result_count": row[9],
+                "first_seen_at": row[10],
+                "last_seen_at": row[11],
+                "last_snapshot_at": row[12],
             }
             for row in rows
         ]

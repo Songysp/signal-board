@@ -280,6 +280,36 @@ def get_current_listing_states(watch_id: int) -> dict[str, dict]:
         }
 
 
+def list_current_results(watch_id: int, limit: int = 100) -> list[tuple]:
+    with connect() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT
+                external_listing_id,
+                result_level,
+                title,
+                price_text,
+                trade_type,
+                area_text,
+                floor_text,
+                complex_name,
+                source_url,
+                result_count,
+                first_seen_at,
+                last_seen_at,
+                last_snapshot_at
+            FROM listing_current_state
+            WHERE watch_target_id = %s
+              AND is_active = TRUE
+            ORDER BY COALESCE(result_count, 0) DESC, external_listing_id
+            LIMIT %s
+            """,
+            (watch_id, limit),
+        )
+        return list(cursor.fetchall())
+
+
 def save_snapshot(watch_id: int, search_url: str, listings: list[NaverListing]) -> None:
     now = datetime.now(timezone.utc)
     with connect() as conn:
