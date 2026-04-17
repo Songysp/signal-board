@@ -440,3 +440,26 @@ def mark_alert_failed(
             """,
             (reason[:1000], watch_id, listing_id, event_type),
         )
+
+
+def prune_alert_events(days: int, *, apply: bool = False) -> int:
+    with connect() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+            FROM alert_events
+            WHERE created_at < NOW() - make_interval(days => %s)
+            """,
+            (days,),
+        )
+        count = int(cursor.fetchone()[0])
+        if apply and count:
+            cursor.execute(
+                """
+                DELETE FROM alert_events
+                WHERE created_at < NOW() - make_interval(days => %s)
+                """,
+                (days,),
+            )
+        return count

@@ -90,6 +90,20 @@ Get-ScheduledTaskInfo -TaskName SignalBoardPoll
 .\scripts\uninstall_windows_task.ps1
 ```
 
+## Retention Cleanup
+
+Dry-run old alert events and local log files:
+
+```powershell
+.\.venv\bin\python.exe -m app.cli cleanup-retention --days 30
+```
+
+Apply cleanup:
+
+```powershell
+.\.venv\bin\python.exe -m app.cli cleanup-retention --days 30 --apply
+```
+
 ## Operational Notes
 
 - Keep Docker Desktop running so PostgreSQL is available.

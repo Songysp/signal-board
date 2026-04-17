@@ -17,7 +17,7 @@ from app.naver import (
     filters_as_dict,
     parse_search_filters,
 )
-from app.storage import add_watch, init_db, list_watches
+from app.storage import add_watch, init_db, list_watches, prune_alert_events
 
 
 app = typer.Typer(help="SignalBoard CLI")
@@ -28,6 +28,18 @@ SAFE_NAVER_POLL_INTERVAL_SECONDS = 14_400
 def _default_state_file(search_url: str) -> Path:
     digest = hashlib.sha1(search_url.encode("utf-8")).hexdigest()[:12]
     return Path(f".signalboard-watch-{digest}.json")
+
+
+def _old_log_files(days: int) -> list[Path]:
+    log_dir = Path(".logs")
+    if not log_dir.exists():
+        return []
+    cutoff = time.time() - (days * 24 * 60 * 60)
+    return [
+        path
+        for path in log_dir.glob("*.log")
+        if path.is_file() and path.stat().st_mtime < cutoff
+    ]
 
 
 def _resolve_search_url(search_url: str | None) -> str:
@@ -135,6 +147,34 @@ def db_check_command() -> None:
     except Exception as exc:
         _abort(_format_db_error(exc))
     typer.echo("database connection ok")
+
+
+@app.command("cleanup-retention")
+def cleanup_retention_command(
+    days: int = typer.Option(30, min=1, help="Delete records/files older than this many days"),
+    apply: bool = typer.Option(False, "--apply", help="Actually delete old records/files"),
+) -> None:
+    """Dry-run or apply retention cleanup for old alert events and local logs."""
+    try:
+        alert_count = prune_alert_events(days, apply=apply)
+    except Exception as exc:
+        _abort(_format_db_error(exc))
+
+    old_logs = _old_log_files(days)
+    typer.echo(f"old_alert_events={alert_count}")
+    typer.echo(f"old_log_files={len(old_logs)}")
+
+    for path in old_logs[:20]:
+        typer.echo(f"log={path}")
+    if len(old_logs) > 20:
+        typer.echo(f"... and {len(old_logs) - 20} more log files")
+
+    if apply:
+        for path in old_logs:
+            path.unlink()
+        typer.echo("retention cleanup applied")
+    else:
+        typer.echo("dry-run only; rerun with --apply to delete")
 
 
 @app.command("doctor")

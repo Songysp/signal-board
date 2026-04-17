@@ -224,6 +224,20 @@
   - DB smoke test for watch #3 current results
   - `pytest` passes
 
+### T034 Retention Cleanup Command
+- Status: `DONE`
+- Goal: 오래된 alert 이벤트와 로컬 로그가 무한히 쌓이지 않도록 수동 cleanup 제공
+- Output:
+  - `prune_alert_events(days, apply=False)`
+  - `cleanup-retention` CLI command
+  - dry-run by default
+  - `--apply` required for deletion
+  - runbook retention cleanup section
+- Verification:
+  - `pytest` passes
+  - `cleanup-retention --days 1` dry-run reports old alert events/log files without deleting
+  - `cleanup-retention --help`
+
 ### T001 Project Separation
 - Status: `DONE`
 - Goal: SignalBoard를 독립 폴더/독립 repo로 분리
