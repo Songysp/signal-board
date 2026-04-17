@@ -261,6 +261,18 @@
   - dashboard HTML test checks `renderPreviewResults`
   - `pytest` passes
 
+### T037 Management UI Result Filter
+- Status: `DONE`
+- Goal: 현재 검색 결과가 많을 때 관리화면에서 원하는 단지/조건을 빠르게 찾기
+- Output:
+  - result search input
+  - sort selector for result count, name, and price text
+  - filtered count summary
+  - preview and saved results share the same card renderer
+- Verification:
+  - dashboard HTML test checks filter functions
+  - `pytest` passes
+
 ### T001 Project Separation
 - Status: `DONE`
 - Goal: SignalBoard를 독립 폴더/독립 repo로 분리
