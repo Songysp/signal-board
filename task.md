@@ -211,6 +211,19 @@
   - `doctor --no-check-kakao --no-check-naver` shows refresh-token warning
   - `pytest` passes
 
+### T033 Current Results View
+- Status: `DONE`
+- Goal: 각 watch가 현재 알고 있는 단지/클러스터 검색 결과를 관리화면에서 확인
+- Output:
+  - `list_current_results(watch_id, limit)`
+  - `GET /watches/{watch_id}/results`
+  - management UI `현재 결과 보기` button
+  - current results rendered as cards with level, result count, price, area, and Naver link
+- Verification:
+  - API test for watch results endpoint
+  - DB smoke test for watch #3 current results
+  - `pytest` passes
+
 ### T001 Project Separation
 - Status: `DONE`
 - Goal: SignalBoard를 독립 폴더/독립 repo로 분리

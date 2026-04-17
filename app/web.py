@@ -138,7 +138,8 @@ def render_dashboard() -> str:
     }
 
     .event-list,
-    .watch-list {
+    .watch-list,
+    .result-list {
       display: grid;
       gap: 12px;
       background: transparent;
@@ -148,7 +149,8 @@ def render_dashboard() -> str:
     }
 
     .event-card,
-    .watch-card {
+    .watch-card,
+    .result-card {
       border: 1px solid var(--line);
       border-radius: 18px;
       background: var(--paper);
@@ -156,7 +158,8 @@ def render_dashboard() -> str:
     }
 
     .event-meta,
-    .watch-meta {
+    .watch-meta,
+    .result-meta {
       align-items: center;
       display: flex;
       flex-wrap: wrap;
@@ -179,12 +182,14 @@ def render_dashboard() -> str:
     .badge-inactive { background: #eeeeea; color: #6b6b61; }
 
     .event-title,
-    .watch-title {
+    .watch-title,
+    .result-title {
       font: 800 14px/1.4 "Malgun Gothic", sans-serif;
     }
 
     .event-message,
-    .watch-url {
+    .watch-url,
+    .result-detail {
       color: #233026;
       font: 500 13px/1.6 "Malgun Gothic", sans-serif;
       white-space: pre-wrap;
@@ -255,6 +260,11 @@ def render_dashboard() -> str:
       <article class="card wide">
         <h2>최근 알림</h2>
         <div class="event-list" id="alerts">loading...</div>
+      </article>
+
+      <article class="card wide">
+        <h2>현재 검색 결과</h2>
+        <div class="result-list" id="results">감시 목록에서 현재 결과 보기를 눌러주세요.</div>
       </article>
 
       <article class="card wide">
@@ -358,6 +368,7 @@ def render_dashboard() -> str:
           </div>
           <div class="watch-url">${escapeHtml(watch.search_url)}</div>
           <div class="watch-actions">
+            <button onclick="loadWatchResults(${watch.id})">현재 결과 보기</button>
             <button onclick="setWatchActive(${watch.id}, ${watch.is_active ? "false" : "true"})">
               ${watch.is_active ? "비활성화" : "활성화"}
             </button>
@@ -375,6 +386,38 @@ def render_dashboard() -> str:
         });
         $("actionStatus").textContent = `watch #${result.id} ${result.is_active ? "활성화" : "비활성화"} 완료`;
         await refreshAll();
+      } catch (error) {
+        $("actionStatus").textContent = error.message;
+      }
+    }
+
+    function renderResults(results) {
+      if (!results.length) {
+        $("results").innerHTML = '<div class="result-card">현재 저장된 검색 결과가 없습니다.</div>';
+        return;
+      }
+      $("results").innerHTML = results.map((result) => `
+        <article class="result-card">
+          <div class="result-meta">
+            <span class="badge badge-status">${escapeHtml(result.result_level)}</span>
+            <span class="badge badge-status">결과 수 ${escapeHtml(result.result_count ?? "-")}</span>
+            <span class="result-title">${escapeHtml(result.title || result.complex_name || result.external_listing_id)}</span>
+          </div>
+          <div class="result-detail">
+            ${escapeHtml(result.trade_type || "-")} · ${escapeHtml(result.price_text || "-")} · ${escapeHtml(result.area_text || "-")}
+            <br>마지막 확인: ${escapeHtml(result.last_seen_at || "-")}
+            <br><a href="${escapeHtml(result.source_url || "#")}" target="_blank" rel="noreferrer">네이버에서 보기</a>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    async function loadWatchResults(watchId) {
+      $("actionStatus").textContent = `watch #${watchId} 현재 결과 조회 중...`;
+      try {
+        const results = await api(`/watches/${watchId}/results?limit=100`);
+        $("actionStatus").textContent = `watch #${watchId} 현재 결과 ${results.length}건`;
+        renderResults(results);
       } catch (error) {
         $("actionStatus").textContent = error.message;
       }
