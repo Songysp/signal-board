@@ -251,6 +251,16 @@
   - CLI help smoke test
   - `pytest` passes
 
+### T036 Preview Result Cards
+- Status: `DONE`
+- Goal: 관리화면 미리보기 결과를 raw JSON 대신 결과 카드로 바로 확인
+- Output:
+  - preview-search success renders cards in current results area
+  - output panel shows compact preview summary
+- Verification:
+  - dashboard HTML test checks `renderPreviewResults`
+  - `pytest` passes
+
 ### T001 Project Separation
 - Status: `DONE`
 - Goal: SignalBoard를 독립 폴더/독립 repo로 분리

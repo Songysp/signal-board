@@ -27,6 +27,7 @@ def test_dashboard_endpoint_returns_html() -> None:
     assert "setWatchActive" in response.text
     assert "현재 결과" in response.text
     assert "loadWatchResults" in response.text
+    assert "renderPreviewResults" in response.text
     assert "runWatchPoll" in response.text
     assert "관리 토큰" in response.text
 
