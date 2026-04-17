@@ -168,6 +168,25 @@
   - `doctor`
   - `pytest` passes
 
+### T030 Safe Local Scheduler Runbook
+- Status: `DONE`
+- Goal: 4시간 기본 주기로 로컬 운영을 안전하게 반복 실행할 수 있는 스크립트와 문서 제공
+- Output:
+  - `scripts/run_poll_once.ps1`
+  - `scripts/install_windows_task.ps1`
+  - `scripts/uninstall_windows_task.ps1`
+  - `docs/RUNBOOK.md`
+  - README runbook link
+- Safety:
+  - install script refuses intervals below 4 hours
+  - run script starts local Docker Postgres before doctor/poll
+  - dry-run mode verifies readiness without polling or sending alerts
+- Verification:
+  - PowerShell parser check for all scripts
+  - `install_windows_task.ps1 -IntervalHours 3` fails as expected
+  - `run_poll_once.ps1 -DryRun` succeeds
+  - `pytest` passes
+
 ### T001 Project Separation
 - Status: `DONE`
 - Goal: SignalBoard를 독립 폴더/독립 repo로 분리

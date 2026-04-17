@@ -62,6 +62,7 @@ Implemented now:
 16. Watch targets can be activated/deactivated through the API and management UI.
 17. Watch summaries include current known result count and alert event count.
 18. `doctor` provides a read-only local health check for env, DB, Kakao profile, and Naver preview.
+19. Local Windows scheduling scripts and runbook are available for safe 4-hour polling operations.
 
 Not implemented yet:
 
