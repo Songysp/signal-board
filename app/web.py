@@ -109,6 +109,16 @@ def render_dashboard() -> str:
 
     textarea { min-height: 96px; resize: vertical; }
 
+    select {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--paper);
+      color: var(--ink);
+      font: 700 14px/1.5 "Malgun Gothic", sans-serif;
+      padding: 12px 14px;
+      outline: none;
+    }
+
     button {
       border: 0;
       border-radius: 999px;
@@ -206,6 +216,13 @@ def render_dashboard() -> str:
       margin: 10px 0;
     }
 
+    .result-tools {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 220px;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
     .status {
       color: var(--warn);
       font: 700 13px/1.5 "Malgun Gothic", sans-serif;
@@ -217,6 +234,7 @@ def render_dashboard() -> str:
       main { padding: 28px 0; }
       .grid { grid-template-columns: 1fr; }
       .wide { grid-column: auto; }
+      .result-tools { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -264,6 +282,14 @@ def render_dashboard() -> str:
 
       <article class="card wide">
         <h2>현재 검색 결과</h2>
+        <div class="result-tools">
+          <input id="resultFilter" placeholder="단지명, 가격, 면적, 거래유형 검색" oninput="applyResultFilter()">
+          <select id="resultSort" onchange="applyResultFilter()">
+            <option value="count_desc">결과 수 많은 순</option>
+            <option value="name_asc">이름순</option>
+            <option value="price_asc">가격 텍스트순</option>
+          </select>
+        </div>
         <div class="result-list" id="results">감시 목록에서 현재 결과 보기를 눌러주세요.</div>
       </article>
 
@@ -277,6 +303,7 @@ def render_dashboard() -> str:
   <script>
     const $ = (id) => document.getElementById(id);
     let adminToken = localStorage.getItem("signalboardAdminToken") || "";
+    let currentResults = [];
 
     async function api(path, options = {}) {
       const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
@@ -392,12 +419,48 @@ def render_dashboard() -> str:
       }
     }
 
-    function renderResults(results) {
+    function resultSearchText(result) {
+      return [
+        result.external_listing_id,
+        result.result_level,
+        result.title,
+        result.price_text,
+        result.trade_type,
+        result.area_text,
+        result.complex_name,
+        result.result_count
+      ].join(" ").toLowerCase();
+    }
+
+    function sortResults(results) {
+      const mode = $("resultSort").value;
+      return [...results].sort((a, b) => {
+        if (mode === "name_asc") {
+          return String(a.title || a.complex_name || "").localeCompare(String(b.title || b.complex_name || ""), "ko");
+        }
+        if (mode === "price_asc") {
+          return String(a.price_text || "").localeCompare(String(b.price_text || ""), "ko");
+        }
+        return Number(b.result_count || 0) - Number(a.result_count || 0);
+      });
+    }
+
+    function applyResultFilter() {
+      const query = $("resultFilter").value.trim().toLowerCase();
+      const filtered = query
+        ? currentResults.filter((result) => resultSearchText(result).includes(query))
+        : currentResults;
+      renderResults(sortResults(filtered), currentResults.length);
+    }
+
+    function renderResults(results, totalCount = results.length) {
       if (!results.length) {
-        $("results").innerHTML = '<div class="result-card">현재 저장된 검색 결과가 없습니다.</div>';
+        $("results").innerHTML = '<div class="result-card">표시할 검색 결과가 없습니다.</div>';
         return;
       }
-      $("results").innerHTML = results.map((result) => `
+      $("results").innerHTML = `
+        <div class="result-card">표시 ${results.length}건 / 전체 ${totalCount}건</div>
+        ${results.map((result) => `
         <article class="result-card">
           <div class="result-meta">
             <span class="badge badge-status">${escapeHtml(result.result_level)}</span>
@@ -410,11 +473,12 @@ def render_dashboard() -> str:
             <br><a href="${escapeHtml(result.source_url || "#")}" target="_blank" rel="noreferrer">네이버에서 보기</a>
           </div>
         </article>
-      `).join("");
+      `).join("")}`;
     }
 
     function renderPreviewResults(result) {
-      renderResults(result.listings || []);
+      currentResults = result.listings || [];
+      applyResultFilter();
       show("output", { total: result.total, preview_count: (result.listings || []).length });
     }
 
@@ -423,7 +487,8 @@ def render_dashboard() -> str:
       try {
         const results = await api(`/watches/${watchId}/results?limit=100`);
         $("actionStatus").textContent = `watch #${watchId} 현재 결과 ${results.length}건`;
-        renderResults(results);
+        currentResults = results;
+        applyResultFilter();
       } catch (error) {
         $("actionStatus").textContent = error.message;
       }
