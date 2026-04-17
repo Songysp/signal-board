@@ -8,6 +8,12 @@ Do not use unattended polling below 4 hours.
 
 Do not bypass Captcha, rotate IPs, use private login sessions, or work around rate limits.
 
+Before enabling unattended polling, review:
+
+```text
+docs\PRODUCTION_READINESS.md
+```
+
 ## One-Time Readiness Check
 
 ```powershell
