@@ -25,6 +25,7 @@ def test_dashboard_endpoint_returns_html() -> None:
     assert "renderAlerts" in response.text
     assert "setWatchActive" in response.text
     assert "현재 결과" in response.text
+    assert "관리 토큰" in response.text
 
 
 def test_preview_search_endpoint_uses_configured_url(monkeypatch) -> None:
@@ -85,6 +86,34 @@ def test_update_watch_active_endpoint(monkeypatch) -> None:
     assert response.status_code == 200
     assert response.json() == {"id": 7, "is_active": False}
     assert calls == [(7, False)]
+
+
+def test_write_endpoint_requires_admin_token_when_configured(monkeypatch) -> None:
+    monkeypatch.setattr(main.settings, "admin_token", "secret")
+    monkeypatch.setattr(main, "add_watch", lambda label, search_url: 1)
+
+    assert app is not None
+    response = TestClient(app).post(
+        "/watches",
+        json={"label": "테스트", "search_url": "https://new.land.naver.com/"},
+    )
+
+    assert response.status_code == 401
+
+
+def test_write_endpoint_accepts_admin_token_when_configured(monkeypatch) -> None:
+    monkeypatch.setattr(main.settings, "admin_token", "secret")
+    monkeypatch.setattr(main, "add_watch", lambda label, search_url: 1)
+
+    assert app is not None
+    response = TestClient(app).post(
+        "/watches",
+        headers={"X-SignalBoard-Token": "secret"},
+        json={"label": "테스트", "search_url": "https://new.land.naver.com/"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"id": 1}
 
 
 def test_update_watch_active_endpoint_returns_404(monkeypatch) -> None:
