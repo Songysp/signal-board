@@ -287,6 +287,16 @@
   - result filter controls rendered
   - single-watch poll buttons rendered
 
+### T040 Production Readiness Checklist
+- Status: `DONE`
+- Goal: 무인 polling 시작 전 확인 항목을 명확히 문서화
+- Output:
+  - `docs/PRODUCTION_READINESS.md`
+  - README link
+  - RUNBOOK link
+- Verification:
+  - checklist covers Docker, DB, Kakao, refresh token, active watches, doctor, dry-run, 4h interval, admin token, retention cleanup
+
 ### T001 Project Separation
 - Status: `DONE`
 - Goal: SignalBoard를 독립 폴더/독립 repo로 분리
