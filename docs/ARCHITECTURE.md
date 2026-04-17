@@ -65,6 +65,7 @@ Implemented now:
 19. Local Windows scheduling scripts and runbook are available for safe 4-hour polling operations.
 20. Mutating API routes can be protected with optional `SIGNALBOARD_ADMIN_TOKEN`.
 21. Current known search results can be viewed per watch through the API and management UI.
+22. `cleanup-retention` provides dry-run/apply cleanup for old alert events and local logs.
 
 Not implemented yet:
 
