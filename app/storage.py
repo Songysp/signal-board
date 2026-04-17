@@ -170,6 +170,20 @@ def set_watch_active(watch_id: int, is_active: bool) -> bool:
         return cursor.fetchone() is not None
 
 
+def get_watch(watch_id: int) -> tuple | None:
+    with connect() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT id, label, search_url, resolved_search_url, is_active
+            FROM watch_targets
+            WHERE id = %s
+            """,
+            (watch_id,),
+        )
+        return cursor.fetchone()
+
+
 def list_alert_events(limit: int = 50) -> list[tuple]:
     with connect() as conn:
         cursor = conn.cursor()
