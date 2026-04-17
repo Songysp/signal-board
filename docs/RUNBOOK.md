@@ -80,3 +80,4 @@ Get-ScheduledTaskInfo -TaskName SignalBoardPoll
 - Keep `.env` and `.signalboard.tokens.json` in the project folder.
 - Use the management UI to disable old test watches before enabling unattended polling.
 - Use `doctor` when anything looks wrong.
+- For shared networks, set `SIGNALBOARD_ADMIN_TOKEN` in `.env` and enter the same value in the management UI.

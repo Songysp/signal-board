@@ -44,12 +44,18 @@ def health() -> dict[str, str]:
 
 def create_app() -> Any:
     try:
-        from fastapi import FastAPI, HTTPException
+        from fastapi import Depends, FastAPI, Header, HTTPException
         from fastapi.responses import HTMLResponse
     except ImportError as exc:
         raise RuntimeError("Install API dependencies first: python -m pip install -e .[api]") from exc
 
     api = FastAPI(title=settings.app_name, version="0.1.0")
+
+    def require_admin_token(x_signalboard_token: str | None = Header(default=None)) -> None:
+        if not settings.admin_token:
+            return
+        if x_signalboard_token != settings.admin_token:
+            raise HTTPException(status_code=401, detail="admin token required")
 
     @api.get("/health")
     def api_health() -> dict[str, str]:
@@ -81,7 +87,7 @@ def create_app() -> Any:
             for row in rows
         ]
 
-    @api.post("/watches")
+    @api.post("/watches", dependencies=[Depends(require_admin_token)])
     def create_watch(payload: WatchCreate) -> dict[str, int]:
         try:
             watch_id = add_watch(payload.label, payload.search_url)
@@ -89,7 +95,7 @@ def create_app() -> Any:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         return {"id": watch_id}
 
-    @api.patch("/watches/{watch_id}/active")
+    @api.patch("/watches/{watch_id}/active", dependencies=[Depends(require_admin_token)])
     def update_watch_active(watch_id: int, payload: WatchActiveUpdate) -> dict[str, object]:
         try:
             updated = set_watch_active(watch_id, payload.is_active)
@@ -99,7 +105,7 @@ def create_app() -> Any:
             raise HTTPException(status_code=404, detail="watch not found")
         return {"id": watch_id, "is_active": payload.is_active}
 
-    @api.post("/poll")
+    @api.post("/poll", dependencies=[Depends(require_admin_token)])
     def poll() -> list[dict]:
         try:
             results = AlertService(_build_notifier()).poll_all()
@@ -143,7 +149,7 @@ def create_app() -> Any:
             "listings": [asdict(listing) for listing in listings[: payload.limit]],
         }
 
-    @api.post("/kakao/test")
+    @api.post("/kakao/test", dependencies=[Depends(require_admin_token)])
     def send_kakao_test(payload: KakaoTestRequest) -> dict[str, str]:
         try:
             _build_notifier().send_text(payload.message)

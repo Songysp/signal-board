@@ -238,6 +238,9 @@ def render_dashboard() -> str:
       <article class="card">
         <h2>수동 실행</h2>
         <p class="lead">첫 poll은 baseline만 저장하고, 두 번째부터 신규 검색 결과를 알림으로 보냅니다.</p>
+        <label for="adminToken">관리 토큰</label>
+        <input id="adminToken" placeholder="SIGNALBOARD_ADMIN_TOKEN 설정 시 입력">
+        <button onclick="saveAdminToken()">토큰 저장</button>
         <button onclick="runPoll()">전체 poll</button>
         <button onclick="sendKakaoTest()">카카오 테스트</button>
         <button onclick="refreshAll()">새로고침</button>
@@ -263,11 +266,16 @@ def render_dashboard() -> str:
 
   <script>
     const $ = (id) => document.getElementById(id);
+    let adminToken = localStorage.getItem("signalboardAdminToken") || "";
 
     async function api(path, options = {}) {
+      const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+      if (adminToken) {
+        headers["X-SignalBoard-Token"] = adminToken;
+      }
       const response = await fetch(path, {
-        headers: { "Content-Type": "application/json" },
-        ...options
+        ...options,
+        headers
       });
       const text = await response.text();
       let payload;
@@ -281,6 +289,17 @@ def render_dashboard() -> str:
 
     function show(id, value) {
       $(id).textContent = typeof value === "string" ? value : JSON.stringify(value, null, 2);
+    }
+
+    function saveAdminToken() {
+      adminToken = $("adminToken").value.trim();
+      if (adminToken) {
+        localStorage.setItem("signalboardAdminToken", adminToken);
+        $("actionStatus").textContent = "관리 토큰 저장 완료";
+      } else {
+        localStorage.removeItem("signalboardAdminToken");
+        $("actionStatus").textContent = "관리 토큰 삭제 완료";
+      }
     }
 
     function escapeHtml(value) {
@@ -426,6 +445,7 @@ def render_dashboard() -> str:
       }
     }
 
+    $("adminToken").value = adminToken;
     refreshAll();
   </script>
 </body>

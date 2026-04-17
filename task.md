@@ -187,6 +187,19 @@
   - `run_poll_once.ps1 -DryRun` succeeds
   - `pytest` passes
 
+### T031 Optional Admin Token Guard
+- Status: `DONE`
+- Goal: 관리화면/API가 로컬 외부로 노출될 경우 변경 작업을 선택적으로 보호
+- Output:
+  - `SIGNALBOARD_ADMIN_TOKEN`
+  - write routes require `X-SignalBoard-Token` when token is configured
+  - protected routes: watch create, watch active toggle, poll, Kakao test
+  - management UI token input stored in localStorage
+- Verification:
+  - API tests cover 401 without token and success with token
+  - dashboard HTML test checks token UI
+  - `pytest` passes
+
 ### T001 Project Separation
 - Status: `DONE`
 - Goal: SignalBoard를 독립 폴더/독립 repo로 분리

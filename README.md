@@ -102,3 +102,8 @@ DB 없이 단일 URL만 빠르게 테스트:
 로컬 운영 runbook:
 
 - [docs/RUNBOOK.md](docs/RUNBOOK.md)
+
+선택적 관리 토큰:
+
+- `.env`에 `SIGNALBOARD_ADMIN_TOKEN`을 설정하면 watch 등록/토글, poll, Kakao 테스트 같은 변경 API가 `X-SignalBoard-Token` 헤더를 요구합니다.
+- 관리화면의 `관리 토큰` 입력란에 같은 값을 저장하면 UI에서 변경 작업을 계속 사용할 수 있습니다.
