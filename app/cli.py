@@ -17,7 +17,7 @@ from app.naver import (
     filters_as_dict,
     parse_search_filters,
 )
-from app.storage import add_watch, init_db, list_watches, prune_alert_events
+from app.storage import add_watch, get_watch, init_db, list_watches, prune_alert_events
 
 
 app = typer.Typer(help="SignalBoard CLI")
@@ -322,6 +322,42 @@ def poll_command() -> None:
                 f"id={result.watch_id} label={result.label} total={result.total_count} "
                 f"new={len(result.new_listings)} changed={len(result.changed_listings)}"
             )
+
+
+@app.command("poll-watch")
+def poll_watch_command(
+    watch_id: int = typer.Argument(..., help="Watch target id to poll"),
+) -> None:
+    """Fetch one active watch target and send alerts for changes."""
+    try:
+        watch = get_watch(watch_id)
+    except Exception as exc:
+        _abort(_format_db_error(exc))
+    if not watch:
+        _abort(f"watch not found: {watch_id}")
+    if not watch[4]:
+        _abort(f"watch is inactive: {watch_id}")
+    try:
+        result = AlertService(_build_notifier()).poll_watch(
+            int(watch[0]),
+            str(watch[1]),
+            str(watch[3] or watch[2]),
+        )
+    except NaverFetchError as exc:
+        _abort(_format_naver_error(exc))
+    except KakaoMessageError as exc:
+        _abort(f"카카오 메시지 발송에 실패했습니다: {exc}")
+    except typer.BadParameter as exc:
+        _abort(str(exc))
+    except Exception as exc:
+        _abort(_format_db_error(exc))
+    if result.baseline_created:
+        typer.echo(f"id={result.watch_id} label={result.label} baseline-created total={result.total_count} new=0")
+    else:
+        typer.echo(
+            f"id={result.watch_id} label={result.label} total={result.total_count} "
+            f"new={len(result.new_listings)} changed={len(result.changed_listings)}"
+        )
 
 
 @app.command("poll-loop")

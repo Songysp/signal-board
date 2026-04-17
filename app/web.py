@@ -369,6 +369,7 @@ def render_dashboard() -> str:
           <div class="watch-url">${escapeHtml(watch.search_url)}</div>
           <div class="watch-actions">
             <button onclick="loadWatchResults(${watch.id})">현재 결과 보기</button>
+            <button onclick="runWatchPoll(${watch.id})">이 watch poll</button>
             <button onclick="setWatchActive(${watch.id}, ${watch.is_active ? "false" : "true"})">
               ${watch.is_active ? "비활성화" : "활성화"}
             </button>
@@ -472,6 +473,19 @@ def render_dashboard() -> str:
         $("actionStatus").textContent = "poll 완료";
         show("output", result);
         await refreshAll();
+      } catch (error) {
+        $("actionStatus").textContent = error.message;
+      }
+    }
+
+    async function runWatchPoll(watchId) {
+      $("actionStatus").textContent = `watch #${watchId} poll 실행 중...`;
+      try {
+        const result = await api(`/watches/${watchId}/poll`, { method: "POST", body: "{}" });
+        $("actionStatus").textContent = `watch #${watchId} poll 완료`;
+        show("output", result);
+        await refreshAll();
+        await loadWatchResults(watchId);
       } catch (error) {
         $("actionStatus").textContent = error.message;
       }

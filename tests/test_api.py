@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 
 import app.main as main
+from app.models import PollResult
 from app.main import app
 
 
@@ -26,6 +27,7 @@ def test_dashboard_endpoint_returns_html() -> None:
     assert "setWatchActive" in response.text
     assert "현재 결과" in response.text
     assert "loadWatchResults" in response.text
+    assert "runWatchPoll" in response.text
     assert "관리 토큰" in response.text
 
 
@@ -165,3 +167,42 @@ def test_watch_results_endpoint_returns_list(monkeypatch) -> None:
     assert response.status_code == 200
     assert response.json()[0]["external_listing_id"] == "complex:123"
     assert response.json()[0]["result_count"] == 3
+
+
+def test_poll_single_watch_endpoint(monkeypatch) -> None:
+    class FakeAlertService:
+        def __init__(self, notifier):
+            pass
+
+        def poll_watch(self, watch_id, label, search_url):
+            assert watch_id == 7
+            assert label == "테스트"
+            assert search_url == "resolved"
+            return PollResult(
+                watch_id=7,
+                label="테스트",
+                search_url="https://new.land.naver.com/",
+                total_count=0,
+                baseline_created=False,
+                new_listings=[],
+                changed_listings=[],
+            )
+
+    monkeypatch.setattr(main, "get_watch", lambda watch_id: (7, "테스트", "source", "resolved", True))
+    monkeypatch.setattr(main, "AlertService", FakeAlertService)
+    monkeypatch.setattr(main, "_build_notifier", lambda: object())
+
+    assert app is not None
+    response = TestClient(app).post("/watches/7/poll")
+
+    assert response.status_code == 200
+    assert response.json()["watch_id"] == 7
+
+
+def test_poll_single_watch_rejects_inactive_watch(monkeypatch) -> None:
+    monkeypatch.setattr(main, "get_watch", lambda watch_id: (7, "테스트", "source", "resolved", False))
+
+    assert app is not None
+    response = TestClient(app).post("/watches/7/poll")
+
+    assert response.status_code == 400

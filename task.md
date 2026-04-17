@@ -238,6 +238,19 @@
   - `cleanup-retention --days 1` dry-run reports old alert events/log files without deleting
   - `cleanup-retention --help`
 
+### T035 Single Watch Poll
+- Status: `DONE`
+- Goal: 전체 watch 대신 특정 watch만 수동 poll하여 불필요한 요청을 줄임
+- Output:
+  - `get_watch(watch_id)`
+  - `POST /watches/{watch_id}/poll`
+  - `poll-watch WATCH_ID` CLI
+  - management UI `이 watch poll` button
+- Verification:
+  - API tests cover success and inactive watch rejection
+  - CLI help smoke test
+  - `pytest` passes
+
 ### T001 Project Separation
 - Status: `DONE`
 - Goal: SignalBoard를 독립 폴더/독립 repo로 분리
