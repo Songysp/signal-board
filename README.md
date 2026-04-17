@@ -98,3 +98,7 @@ DB 없이 단일 URL만 빠르게 테스트:
 ```powershell
 .\.venv\bin\python.exe -m app.cli doctor
 ```
+
+로컬 운영 runbook:
+
+- [docs/RUNBOOK.md](docs/RUNBOOK.md)
