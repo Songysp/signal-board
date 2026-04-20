@@ -110,6 +110,7 @@ Slack 알림:
 
 - [docs/RUNBOOK.md](docs/RUNBOOK.md)
 - [docs/PRODUCTION_READINESS.md](docs/PRODUCTION_READINESS.md)
+- [docs/ORACLE_DEPLOY.md](docs/ORACLE_DEPLOY.md)
 
 선택적 관리 토큰:
 

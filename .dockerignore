@@ -1,0 +1,16 @@
+.git
+.venv
+.env
+.env.*
+!.env.prod.example
+.logs
+.pytest_cache
+.mypy_cache
+.omx
+.claude
+scratch
+__pycache__
+*.pyc
+*.egg-info
+.signalboard.tokens.json
+.signalboard-watch-*.json
