@@ -53,3 +53,11 @@ Remove scheduler:
 - Individual listing extraction is blocked until a safe complex-to-article path is available.
 - Kakao friend/channel sending is not part of the current MVP.
 - Do not bypass Naver rate limits, Captcha, login restrictions, or IP controls.
+
+## Oracle Cloud
+
+For Oracle Cloud deployment, use:
+
+```text
+docs/ORACLE_DEPLOY.md
+```

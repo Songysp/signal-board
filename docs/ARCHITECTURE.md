@@ -70,6 +70,7 @@ Implemented now:
 24. Search previews render as result cards in the management UI.
 25. Current result cards support client-side search and sorting.
 26. Slack Incoming Webhook can receive the same alert messages as Kakao when configured.
+27. Oracle Cloud Docker Compose deployment files and runbook are available.
 
 Not implemented yet:
 

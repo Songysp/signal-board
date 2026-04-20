@@ -319,6 +319,25 @@
   - Slack notifier unit tests
   - `pytest` passes
 
+### T043 Docker Compose Oracle Deployment
+- Status: `DONE`
+- Goal: Oracle Cloud VM에서 Docker Compose로 SignalBoard를 배포할 수 있게 구성
+- Output:
+  - `Dockerfile`
+  - `compose.prod.yaml`
+  - `.env.prod.example`
+  - `.dockerignore`
+  - `docs/ORACLE_DEPLOY.md`
+  - README / production readiness links
+- Deployment shape:
+  - `postgres` container
+  - `app` container bound to `127.0.0.1:8000`
+  - `worker` container running `poll-loop`
+  - SSH tunnel for admin UI access
+- Verification:
+  - `docker compose -f compose.prod.yaml config --quiet`
+  - `pytest` passes
+
 ### T040 Production Readiness Checklist
 - Status: `DONE`
 - Goal: 무인 polling 시작 전 확인 항목을 명확히 문서화
