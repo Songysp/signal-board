@@ -29,3 +29,6 @@ signal-board = "app.cli:app"
 
 [tool.setuptools]
 packages = ["app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

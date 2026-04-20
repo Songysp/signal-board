@@ -151,7 +151,11 @@ class NaverSearchClient:
 
         zoom = filters.zoom or 15
         bounds = _compute_bounds(filters.center_lat, filters.center_lon, zoom)
-        cortar_no, search_query = self._resolve_cortar_no(filters)
+        try:
+            cortar_no, search_query = self._resolve_cortar_no(filters)
+        except NaverFetchError:
+            cortar_no = ""
+            search_query = "coordinate-bounds"
 
         params: dict[str, str] = {
             "rletTpCd": ":".join(_map_real_estate_types_to_mobile(filters)),
@@ -163,11 +167,12 @@ class NaverSearchClient:
             "lft": str(bounds["lft"]),
             "top": str(bounds["top"]),
             "rgt": str(bounds["rgt"]),
-            "cortarNo": cortar_no,
             "sort": "prc",
             "page": "1",
             "totCnt": "999",
         }
+        if cortar_no:
+            params["cortarNo"] = cortar_no
 
         legacy_query = _build_legacy_query_params(filters)
         params.update(legacy_query)
