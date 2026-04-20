@@ -101,6 +101,11 @@ DB 없이 단일 URL만 빠르게 테스트:
 
 장시간 운영 전에는 `doctor`에서 `KAKAO_REFRESH_TOKEN`이 있는지 확인하세요. 없으면 `kakao-login`으로 refresh token을 저장하는 편이 안전합니다.
 
+Slack 알림:
+
+- Slack Incoming Webhook URL을 `.env`의 `SLACK_WEBHOOK_URL`에 저장하면 카카오 알림과 함께 Slack에도 발송합니다.
+- 테스트: `.\.venv\bin\python.exe -m app.cli send-test-slack`
+
 로컬 운영 runbook:
 
 - [docs/RUNBOOK.md](docs/RUNBOOK.md)

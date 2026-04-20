@@ -34,6 +34,7 @@ class Settings:
     kakao_redirect_uri: str = "http://127.0.0.1:8765/kakao/callback"
     naver_search_url: str | None = None
     admin_token: str | None = None
+    slack_webhook_url: str | None = None
     skip_ssl_verify: bool = False
 
 
@@ -52,6 +53,7 @@ def load_settings() -> Settings:
         ),
         naver_search_url=os.getenv("NAVER_SEARCH_URL", dotenv.get("NAVER_SEARCH_URL")),
         admin_token=os.getenv("SIGNALBOARD_ADMIN_TOKEN", dotenv.get("SIGNALBOARD_ADMIN_TOKEN")),
+        slack_webhook_url=os.getenv("SLACK_WEBHOOK_URL", dotenv.get("SLACK_WEBHOOK_URL")),
         skip_ssl_verify=os.getenv("SKIP_SSL_VERIFY", dotenv.get("SKIP_SSL_VERIFY", "0")) in {"1", "true", "TRUE"},
     )
 

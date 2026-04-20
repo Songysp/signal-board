@@ -174,7 +174,7 @@ def test_watch_results_endpoint_returns_list(monkeypatch) -> None:
 
 def test_poll_single_watch_endpoint(monkeypatch) -> None:
     class FakeAlertService:
-        def __init__(self, notifier):
+        def __init__(self, notifier, slack_notifier=None):
             pass
 
         def poll_watch(self, watch_id, label, search_url):
@@ -194,6 +194,7 @@ def test_poll_single_watch_endpoint(monkeypatch) -> None:
     monkeypatch.setattr(main, "get_watch", lambda watch_id: (7, "테스트", "source", "resolved", True))
     monkeypatch.setattr(main, "AlertService", FakeAlertService)
     monkeypatch.setattr(main, "_build_notifier", lambda: object())
+    monkeypatch.setattr(main, "_build_slack_notifier", lambda: None)
 
     assert app is not None
     response = TestClient(app).post("/watches/7/poll")
