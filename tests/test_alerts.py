@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from app.alerts import format_listing_message
 from app.alerts import format_result_change_message
+from app.alerts import AlertService
 from app.models import NaverListing
 
 
@@ -50,3 +51,18 @@ def test_format_result_change_message_lists_changed_fields() -> None:
     assert "[부동산알리미] 검색 결과 변화" in message
     assert "가격: 매매 4억~5억 -> 매매 5억~6억" in message
     assert "검색 결과 수: 2 -> 3" in message
+
+
+def test_alert_service_sends_optional_slack_message() -> None:
+    calls = []
+
+    class FakeSlackNotifier:
+        is_configured = True
+
+        def send_text(self, message):
+            calls.append(message)
+
+    service = AlertService(notifier=object(), slack_notifier=FakeSlackNotifier())
+    service._send_slack_if_configured("hello")
+
+    assert calls == ["hello"]

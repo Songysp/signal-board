@@ -18,6 +18,7 @@ from app.naver import (
     parse_search_filters,
 )
 from app.storage import add_watch, get_watch, init_db, list_watches, prune_alert_events
+from app.slack_notifier import SlackMessageError, SlackNotifier
 
 
 app = typer.Typer(help="SignalBoard CLI")
@@ -120,6 +121,13 @@ def _build_notifier() -> KakaoNotifier:
     return KakaoNotifier(token_manager=_build_token_manager())
 
 
+def _build_slack_notifier() -> SlackNotifier:
+    return SlackNotifier(
+        webhook_url=settings.slack_webhook_url,
+        skip_ssl_verify=settings.skip_ssl_verify,
+    )
+
+
 @app.command()
 def health() -> None:
     """Basic scaffold check."""
@@ -210,6 +218,7 @@ def doctor_command(
         mask_secret(settings.kakao_refresh_token) if settings.kakao_refresh_token else "missing; run kakao-login for long-running polling",
     )
     report("OK" if settings.naver_search_url else "WARN", "NAVER_SEARCH_URL", "set" if settings.naver_search_url else "missing")
+    report("OK" if settings.slack_webhook_url else "WARN", "SLACK_WEBHOOK_URL", "set" if settings.slack_webhook_url else "missing")
 
     try:
         with connect() as conn:
@@ -299,7 +308,7 @@ def list_watches_command() -> None:
 def poll_command() -> None:
     """Fetch all active Naver watches and send alerts for newly seen listings."""
     try:
-        service = AlertService(_build_notifier())
+        service = AlertService(_build_notifier(), _build_slack_notifier())
         results = service.poll_all()
     except NaverFetchError as exc:
         _abort(_format_naver_error(exc))
@@ -338,7 +347,7 @@ def poll_watch_command(
     if not watch[4]:
         _abort(f"watch is inactive: {watch_id}")
     try:
-        result = AlertService(_build_notifier()).poll_watch(
+        result = AlertService(_build_notifier(), _build_slack_notifier()).poll_watch(
             int(watch[0]),
             str(watch[1]),
             str(watch[3] or watch[2]),
@@ -547,6 +556,23 @@ def send_test_kakao(
     typer.echo("kakao test message sent")
 
 
+@app.command("send-test-slack")
+def send_test_slack(
+    message: str = typer.Option(
+        "[부동산알리미] Slack 테스트 발송\nSignalBoard 연결이 정상입니다.",
+        help="Text message to send to Slack incoming webhook",
+    ),
+) -> None:
+    """Send a Slack test message using SLACK_WEBHOOK_URL from .env."""
+    try:
+        result = _build_slack_notifier().send_text(message)
+    except SlackMessageError as exc:
+        _abort(f"Slack 메시지 발송에 실패했습니다: {exc}")
+    if result.get("skipped"):
+        _abort(str(result.get("reason")))
+    typer.echo("slack test message sent")
+
+
 @app.command("kakao-login")
 def kakao_login(
     open_browser: bool = typer.Option(True, "--open-browser/--no-open-browser"),
@@ -594,6 +620,7 @@ def show_config() -> None:
     typer.echo(f"kakao_refresh_token={mask_secret(settings.kakao_refresh_token)}")
     typer.echo(f"kakao_redirect_uri={settings.kakao_redirect_uri}")
     typer.echo(f"naver_search_url={'set' if settings.naver_search_url else 'missing'}")
+    typer.echo(f"slack_webhook_url={'set' if settings.slack_webhook_url else 'missing'}")
     typer.echo(f"skip_ssl_verify={settings.skip_ssl_verify}")
 
 

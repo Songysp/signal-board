@@ -69,6 +69,7 @@ Implemented now:
 23. Individual watch targets can be polled from CLI, API, and the management UI to reduce unnecessary requests.
 24. Search previews render as result cards in the management UI.
 25. Current result cards support client-side search and sorting.
+26. Slack Incoming Webhook can receive the same alert messages as Kakao when configured.
 
 Not implemented yet:
 

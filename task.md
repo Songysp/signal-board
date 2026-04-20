@@ -304,6 +304,21 @@
   - provided Songdo URL `preview-search` returns complex-level `total=20`
   - official pytest suite passes
 
+### T042 Slack Webhook Notification Channel
+- Status: `DONE`
+- Goal: 카카오 외에 Slack Incoming Webhook으로도 알림을 받을 수 있게 하기
+- Output:
+  - `SLACK_WEBHOOK_URL`
+  - `SlackNotifier`
+  - optional Slack send in `AlertService`
+  - `send-test-slack` CLI
+  - `doctor` Slack config check
+  - docs for Slack webhook usage
+- Verification:
+  - actual `send-test-slack` succeeded
+  - Slack notifier unit tests
+  - `pytest` passes
+
 ### T040 Production Readiness Checklist
 - Status: `DONE`
 - Goal: 무인 polling 시작 전 확인 항목을 명확히 문서화

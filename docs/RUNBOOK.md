@@ -38,6 +38,18 @@ Refresh manually when needed:
 .\.venv\bin\python.exe -m app.cli kakao-refresh
 ```
 
+## Slack Notification
+
+If `SLACK_WEBHOOK_URL` is set in `.env`, SignalBoard sends alert messages to Slack in addition to Kakao.
+
+Test Slack delivery:
+
+```powershell
+.\.venv\bin\python.exe -m app.cli send-test-slack
+```
+
+Keep the webhook URL secret and never commit it.
+
 ## Run One Poll Manually
 
 This command checks local readiness without sending a Kakao test message, then runs one DB-backed poll.

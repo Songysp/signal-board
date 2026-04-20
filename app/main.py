@@ -8,6 +8,7 @@ from app.config import settings
 from app.kakao_notifier import KakaoMessageError, KakaoNotifier
 from app.kakao_tokens import KakaoTokenManager
 from app.naver import NaverFetchError, NaverSearchClient
+from app.slack_notifier import SlackNotifier
 from app.storage import add_watch, get_watch, list_alert_events, list_current_results, list_watches, set_watch_active
 from app.web import render_dashboard
 
@@ -108,7 +109,7 @@ def create_app() -> Any:
     @api.post("/poll", dependencies=[Depends(require_admin_token)])
     def poll() -> list[dict]:
         try:
-            results = AlertService(_build_notifier()).poll_all()
+            results = AlertService(_build_notifier(), _build_slack_notifier()).poll_all()
         except Exception as exc:
             raise HTTPException(status_code=500, detail=str(exc)) from exc
         return [asdict(result) for result in results]
@@ -124,7 +125,7 @@ def create_app() -> Any:
         if not watch[4]:
             raise HTTPException(status_code=400, detail="watch is inactive")
         try:
-            result = AlertService(_build_notifier()).poll_watch(
+            result = AlertService(_build_notifier(), _build_slack_notifier()).poll_watch(
                 int(watch[0]),
                 str(watch[1]),
                 str(watch[3] or watch[2]),
@@ -217,6 +218,13 @@ def _build_notifier() -> KakaoNotifier:
         skip_ssl_verify=settings.skip_ssl_verify,
     )
     return KakaoNotifier(token_manager=token_manager)
+
+
+def _build_slack_notifier() -> SlackNotifier:
+    return SlackNotifier(
+        webhook_url=settings.slack_webhook_url,
+        skip_ssl_verify=settings.skip_ssl_verify,
+    )
 
 
 try:

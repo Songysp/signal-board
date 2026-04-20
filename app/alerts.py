@@ -6,6 +6,7 @@ import json
 from app.kakao_notifier import KakaoNotifier
 from app.models import NaverListing, PollResult
 from app.naver import NaverSearchClient
+from app.slack_notifier import SlackMessageError, SlackNotifier
 from app.storage import (
     create_alert_event,
     existing_listing_ids,
@@ -86,8 +87,9 @@ def _change_event_type(listing: NaverListing) -> str:
 
 
 class AlertService:
-    def __init__(self, notifier: KakaoNotifier) -> None:
+    def __init__(self, notifier: KakaoNotifier, slack_notifier: SlackNotifier | None = None) -> None:
         self.notifier = notifier
+        self.slack_notifier = slack_notifier
         self.naver_client = NaverSearchClient()
 
     def poll_all(self) -> list[PollResult]:
@@ -131,6 +133,7 @@ class AlertService:
                 raise
             else:
                 mark_alert_sent(watch_id, listing.listing_id)
+            self._send_slack_if_configured(message)
 
         for listing in changed_listings:
             previous = current_states[listing.listing_id]
@@ -146,6 +149,7 @@ class AlertService:
                 raise
             else:
                 mark_alert_sent(watch_id, listing.listing_id, event_type=event_type)
+            self._send_slack_if_configured(message)
 
         return PollResult(
             watch_id=watch_id,
@@ -156,3 +160,11 @@ class AlertService:
             new_listings=new_listings,
             changed_listings=changed_listings,
         )
+
+    def _send_slack_if_configured(self, message: str) -> None:
+        if not self.slack_notifier or not self.slack_notifier.is_configured:
+            return
+        try:
+            self.slack_notifier.send_text(message)
+        except SlackMessageError:
+            return
