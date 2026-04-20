@@ -112,6 +112,12 @@ Slack 알림:
 - [docs/PRODUCTION_READINESS.md](docs/PRODUCTION_READINESS.md)
 - [docs/ORACLE_DEPLOY.md](docs/ORACLE_DEPLOY.md)
 
+Oracle 배포 빠른 스크립트:
+
+- 서버 bootstrap/deploy: `scripts/oracle/*.sh`
+- Windows SSH/터널 템플릿: `scripts/oracle/*.example.bat`
+- 사용자가 읽을 배포 문서: [docs/ORACLE_DEPLOY.md](docs/ORACLE_DEPLOY.md)
+
 선택적 관리 토큰:
 
 - `.env`에 `SIGNALBOARD_ADMIN_TOKEN`을 설정하면 watch 등록/토글, poll, Kakao 테스트 같은 변경 API가 `X-SignalBoard-Token` 헤더를 요구합니다.
