@@ -264,6 +264,12 @@ Browser-rendered scraping fallback status:
 - The original `new.land` URL redirects to `/404` in headless Chrome.
 - Because of the project safety policy, SignalBoard will not bypass DevTools blocking, rotate IPs, reuse private sessions, or work around rate limits.
 
+Article API spike status:
+
+- A direct single-complex probe of `fin.land.naver.com/front-api/v1/complex/article/list` returned `429 TOO_MANY_REQUESTS`.
+- Product code does not call article-level internal APIs in a per-complex loop.
+- If mobile region-code resolution fails, complex-level collection falls back to coordinate bounds because `complexList` can return results without `cortarNo`.
+
 ## API And UI Direction
 
 The product is still API-first in design, even though the UI is not built yet.

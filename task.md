@@ -287,6 +287,23 @@
   - result filter controls rendered
   - single-watch poll buttons rendered
 
+### T041 Naver Article API Spike
+- Status: `DONE`
+- Goal: GitHub 사례처럼 네이버 내부 article API를 제품 코드에 붙일 수 있는지 안전하게 1회성 검증
+- Attempts:
+  - `https://fin.land.naver.com/front-api/v1/complex/article/list`
+  - single complex numbers from current Songdo search results
+  - browser-like JSON headers without login/session/IP/Captcha bypass
+- Findings:
+  - single article-list probe returned `429 TOO_MANY_REQUESTS`
+  - repeated per-complex article calls were removed from product code
+  - current safe product behavior remains complex/cluster-level collection
+- Additional fix:
+  - mobile `complexList` works without `cortarNo`; when region-code resolution fails, SignalBoard now falls back to coordinate bounds instead of failing the whole preview.
+- Verification:
+  - provided Songdo URL `preview-search` returns complex-level `total=20`
+  - official pytest suite passes
+
 ### T040 Production Readiness Checklist
 - Status: `DONE`
 - Goal: 무인 polling 시작 전 확인 항목을 명확히 문서화
@@ -539,13 +556,13 @@ Completed output:
   - 신형 화면은 `fin.land.naver.com/front-api/v1/...` 계열을 쓰는 것으로 보이나 직접 확인 시 `TOO_MANY_REQUESTS`가 반환됨
 - Safety decision:
   - IP 우회, Captcha 우회, 요청 반복, 로그인 세션 우회는 하지 않음
-  - 그래서 현재는 false `total=0`을 막는 데서 멈춤
+  - product code must not call article-level internal APIs in a loop while they return 429
 - Need:
   - 실제 브라우저 DevTools Network에서 해당 URL을 열었을 때 성공하는 매물 목록 API 요청 1건의 URL, method, request payload, response shape
   - 또는 네이버 외 공식/허가된 데이터 소스 선택
 - Verification so far:
-  - `preview-search` now reports a clear mismatch instead of `total=0`
-  - `pytest` passes
+  - complex-level `preview-search` works
+  - single article-list probe returned 429
 
 ### T019 Kakao Friend List / Friend Send
 - Status: `BLOCKED`

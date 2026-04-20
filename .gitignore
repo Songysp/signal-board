@@ -5,6 +5,7 @@
 .claude/
 .omx/
 .logs/
+scratch/
 *.egg-info/
 __pycache__/
 *.pyc
