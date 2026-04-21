@@ -391,8 +391,17 @@ def _parse_fin_filters(search_url: str, query: dict[str, str]) -> NaverSearchFil
     center = query.get("center")
     if center and "-" in center:
         lon_value, lat_value = center.split("-", 1)
-        center_lon = float(lon_value)
-        center_lat = float(lat_value)
+        try:
+            center_lon = float(lon_value)
+            center_lat = float(lat_value)
+        except ValueError as exc:
+            raise NaverFetchError(
+                "Fin search URL has an unsupported center format. Copy the full Naver map URL after the map fully loads."
+            ) from exc
+    elif center:
+        raise NaverFetchError(
+            "Fin search URL has an unsupported center format. Copy the full Naver map URL after the map fully loads."
+        )
 
     return NaverSearchFilters(
         source_url=search_url,
