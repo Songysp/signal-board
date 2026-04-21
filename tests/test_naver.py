@@ -23,6 +23,11 @@ def test_parse_search_filters_rejects_unsupported_legacy_ms_format() -> None:
         parse_search_filters("https://new.land.naver.com/complexes?ms=2ANHjm&a=APT&b=A1")
 
 
+def test_parse_search_filters_rejects_unsupported_fin_center_format() -> None:
+    with pytest.raises(NaverFetchError, match="unsupported center format"):
+        parse_search_filters("https://fin.land.naver.com/map?center=3zou4n-2ANHjm&zoom=15")
+
+
 def test_fetch_listings_treats_naver_null_response_as_empty_list() -> None:
     client = NaverSearchClient()
 
