@@ -63,6 +63,8 @@ def _format_naver_error(exc: Exception) -> str:
         return "검색 URL에 지도 중심 좌표가 없습니다. 네이버부동산에서 조건을 만든 뒤 지도 URL 전체를 복사해주세요."
     if "Could not resolve cortarNo" in message:
         return "네이버 지역 코드(cortarNo)를 찾지 못했습니다. URL의 지도 위치를 조금 이동하거나 더 구체적인 지역에서 다시 저장해보세요."
+    if "unsupported ms format" in message:
+        return "네이버 URL의 지도 좌표 형식을 해석하지 못했습니다. 네이버부동산에서 지도가 완전히 로드된 뒤 주소창의 전체 URL을 다시 복사해주세요."
     if "HTTP 429" in message or "TOO_MANY_REQUESTS" in message:
         return "네이버 요청 제한에 걸렸습니다. 잠시 후 다시 시도해주세요."
     if "complex-level results" in message:

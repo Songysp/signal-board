@@ -430,9 +430,18 @@ def _parse_legacy_filters(search_url: str, query: dict[str, str]) -> NaverSearch
     if ms:
         parts = ms.split(",")
         if len(parts) == 3:
-            center_lat = float(parts[0])
-            center_lon = float(parts[1])
-            zoom = _to_int(parts[2])
+            try:
+                center_lat = float(parts[0])
+                center_lon = float(parts[1])
+                zoom = _to_int(parts[2])
+            except ValueError as exc:
+                raise NaverFetchError(
+                    "Legacy search URL has an unsupported ms format. Copy the full Naver map URL after the map fully loads."
+                ) from exc
+        else:
+            raise NaverFetchError(
+                "Legacy search URL has an unsupported ms format. Copy the full Naver map URL after the map fully loads."
+            )
 
     return NaverSearchFilters(
         source_url=search_url,
