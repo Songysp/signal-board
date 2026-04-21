@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from app.naver import NaverSearchClient
+import pytest
+
+from app.naver import NaverFetchError, NaverSearchClient, parse_search_filters
 
 
 class _NullJsonResponse:
@@ -14,6 +16,11 @@ class _JsonResponse:
 
     def json(self):
         return self.payload
+
+
+def test_parse_search_filters_rejects_unsupported_legacy_ms_format() -> None:
+    with pytest.raises(NaverFetchError, match="unsupported ms format"):
+        parse_search_filters("https://new.land.naver.com/complexes?ms=2ANHjm&a=APT&b=A1")
 
 
 def test_fetch_listings_treats_naver_null_response_as_empty_list() -> None:
